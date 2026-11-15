@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>억대 연봉 생태 변호사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 속도감 있고 위트 있는 법정 배틀, 중1 눈높이
+   IDEA: 법정 추리 게임기 — 위 몸값 전광판, 가운데 증언대, 아래 대사창
+   PICTURE: 나무 법정과 숲속 그루터기 법정 위의 화자 초상, 아래 배심원석 다섯 자리
+   COLOUR and TYPE: 마호가니 + 숲 초록, 돈은 금빛, 이의 있소는 빨강 / Black Han Sans 숫자·외침, Jua 제목, Gowun Dodum 대사
+   LAYOUT: 한 열 최대 900px, HUD 위 고정, 무대 높이 36vh, 대사창 아래 */
+:root{color-scheme:dark;--wood:#5a2f1a;--wood2:#8a4b2a;--wood3:#c27a45;--forest:#16503d;--leaf:#2f8a5f;--gold:#ffcf3a;--red:#e5383b;--ink:#1d1410;--paper:#fffdf8;--mute:#6d5a4c;--line:#e7dccd;--good:#1f8a52;--warn:#b77900}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:#20140e;color:#f7efe6;font:17px/1.6 "Gowun Dodum",system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.jua{font-family:Jua,"Gowun Dodum",sans-serif;font-weight:400;line-height:1.15;text-wrap:balance;margin:0}
+.bh{font-family:"Black Han Sans",Jua,sans-serif;font-weight:400}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hide{display:none!important}
+#app{max-width:900px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+/* HUD */
+.hud{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#2b1a11,#20140e);border-bottom:3px solid var(--wood2);padding:8px max(3vw,10px);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.act{font-family:Jua;font-size:15px;color:var(--wood3)}
+.tools{display:flex;gap:6px}
+.tools button{min-height:40px;min-width:44px;border-radius:12px;border:2px solid var(--wood2);background:#3a2316;padding:0 10px;font-size:15px}
+.feebox{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;position:relative}
+.feebox small{font-size:13px;color:#d9c3ad}
+#fee{transform-origin:left center;font-size:clamp(26px,6vw,36px);color:var(--gold);line-height:1.1;white-space:nowrap;display:inline-block}
+#fee.bump{animation:bump .5s}
+@keyframes bump{30%{transform:scale(1.18)}}
+#combo{font-family:"Black Han Sans";color:#ff9d3a;font-size:16px}
+#hearts{font-size:20px;letter-spacing:1px;white-space:nowrap;text-align:right}
+#hearts .lost{filter:grayscale(1);opacity:.35}
+#hearts .brk{display:inline-block;animation:brk .7s}
+@keyframes brk{0%{transform:scale(1.6)}50%{transform:scale(.6) rotate(20deg)}}
+/* 무대 */
+.stage{position:relative;height:clamp(250px,38vh,380px);overflow:hidden;background:linear-gradient(180deg,#7a4426 0 8%,#a35f36 8% 10%,#6b3a20 10% 62%,#4e2815 62%);transition:background .6s}
+.stage.forest{background:radial-gradient(circle at 50% 120%,#3c6b2a 0 30%,transparent 31%),linear-gradient(180deg,#1f6b4c,#14503a 62%,#0f3b2b)}
+.stage.room{background:linear-gradient(180deg,#2d4a5a,#20394a 62%,#162a37)}
+.stage.final{background:linear-gradient(180deg,#5b2340,#3d1830 62%,#2a1022)}
+.stage::before{content:"";position:absolute;inset:auto 0 26% 0;height:12%;background:linear-gradient(180deg,var(--wood3),var(--wood2));box-shadow:0 6px 0 rgba(0,0,0,.25)}
+.stage.forest::before{background:linear-gradient(180deg,#a36a3d,#7a4a25);border-radius:50% 50% 0 0/40% 40% 0 0;inset:auto 22% 26% 22%}
+.speaker{position:absolute;left:50%;top:8%;transform:translateX(-50%);display:grid;justify-items:center;gap:4px;z-index:2}
+.portrait{width:clamp(96px,22vw,140px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff7e6,#f0d9b5);display:grid;place-items:center;font-size:clamp(56px,13vw,86px);box-shadow:0 8px 0 rgba(0,0,0,.3),inset 0 -8px 0 rgba(0,0,0,.08);border:4px solid var(--gold)}
+.portrait svg{width:72%;height:72%}
+.portrait.pop{animation:popin .35s}
+@keyframes popin{0%{transform:scale(.7)}70%{transform:scale(1.08)}}
+.plate{background:#f6e3b8;color:#4a2a12;border:2px solid #6b3a1b;border-radius:8px;padding:0 10px;font-family:Jua;font-size:15px;white-space:nowrap}
+.jury{position:absolute;left:0;right:0;bottom:4px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));z-index:3;padding:0 4px}
+.jr{position:relative;display:grid;justify-items:center}
+.jface{width:clamp(40px,10vw,56px);aspect-ratio:1;border-radius:50%;background:#f3e5cf;display:grid;place-items:center;font-size:clamp(24px,6vw,34px);box-shadow:0 4px 0 rgba(0,0,0,.3)}
+.jface svg{width:78%;height:78%}
+.jface.jump{animation:bob .5s 2}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.jmood{position:absolute;top:-6px;right:calc(50% - 34px);font-size:16px}
+.jname{font-size:12px;color:#f3e5cf;font-family:Jua}
+.jb{position:absolute;bottom:calc(100% + 6px);width:max-content;max-width:min(150px,32vw);background:#fff;color:var(--ink);border-radius:12px;padding:5px 9px;font-size:13px;line-height:1.35;box-shadow:0 3px 0 rgba(0,0,0,.25);animation:popin .3s;z-index:4}
+.jr:nth-child(1) .jb{left:2px}.jr:nth-child(5) .jb{right:2px}.jr:nth-child(2) .jb,.jr:nth-child(3) .jb,.jr:nth-child(4) .jb{left:50%;transform:translateX(-50%)}
+.jb.good{border:2px solid var(--good)}.jb.human{border:2px solid var(--warn)}.jb.bad{border:2px solid var(--red)}
+#floats{position:absolute;inset:0;pointer-events:none;z-index:6}
+.fl{position:absolute;left:50%;top:40%;transform:translateX(-50%);font-family:"Black Han Sans";font-size:clamp(26px,6vw,40px);white-space:nowrap;text-shadow:0 3px 0 rgba(0,0,0,.45);animation:rise 1.4s forwards}
+.fl.up{color:var(--gold)}.fl.down{color:#ff6b6b}.fl.cb{color:#ff9d3a;font-size:22px;top:56%}
+@keyframes rise{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.15)}100%{opacity:0;transform:translate(-50%,-80px)}}
+.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+/* 대사창 */
+.box{flex:1;background:var(--paper);color:var(--ink);border-top:6px solid var(--wood2);padding:16px max(4vw,14px) 22px;position:relative}
+.name{display:inline-block;background:var(--wood);color:#fff;font-family:Jua;font-size:17px;border-radius:10px 10px 10px 0;padding:2px 14px;margin-bottom:8px}
+.dlg{cursor:pointer;min-height:150px;user-select:none}
+.txt{font-size:clamp(18px,3.6vw,21px);line-height:1.65;white-space:pre-line}
+.nexthint{margin-top:10px;color:var(--mute);font-size:14px;opacity:0}
+.nexthint.on{opacity:1;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.3}}
+.q{font-family:Jua;font-size:clamp(20px,4vw,24px);color:var(--wood);margin:4px 0 12px}
+.opts{display:grid;gap:10px}
+.op{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;text-align:left;background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px 14px;min-height:56px;font-size:17px;color:var(--ink);transition:transform .12s,border-color .12s}
+.op:hover:not(:disabled){border-color:var(--wood2);transform:translateX(3px)}
+.op b{font-family:"Black Han Sans";width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--wood);color:#fff;font-weight:400}
+.op:disabled{opacity:.4;text-decoration:line-through;cursor:default}
+.check .op:disabled{text-decoration:none}.op.right,.op.right:disabled{opacity:1;border-color:var(--good);background:#eef8f1}
+.fb{border-radius:16px;padding:14px 16px;border-left:8px solid var(--good);background:#eef8f1}
+.fb.t1{border-left-color:var(--warn);background:#fff6e2}.fb.t0{border-left-color:var(--red);background:#ffecec}
+.fb h3{font-size:22px}.fb.t2 h3{color:var(--good)}.fb.t1 h3{color:var(--warn)}.fb.t0 h3{color:var(--red)}
+.fb p{margin:6px 0 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 22px;border-radius:14px;border:0;background:var(--wood);color:#fff;font-family:Jua;font-size:19px;margin-top:14px}
+.btn.red{background:var(--red);font-family:"Black Han Sans";font-size:22px;box-shadow:0 5px 0 #8f1d1f}
+.btn.gold{background:var(--gold);color:#3a2410}
+.btn.ghost{background:transparent;color:var(--wood);border:2px solid var(--wood)}
+.btn:disabled{opacity:.4;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+/* 증언 */
+.testi{background:#fff4f0;border:3px solid var(--red);border-radius:16px;padding:14px 16px}
+.testi .lab{font-family:Jua;color:var(--red);font-size:15px}
+.testi .txt{margin-top:4px}
+.nav{display:flex;gap:8px;margin-top:10px}
+.nav button{min-width:52px;min-height:44px;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);font-size:18px}
+.hint{font-size:15px;color:var(--mute);margin:8px 0 0}
+/* 자료실·의뢰인 */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.clue,.cl{position:relative;background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px 10px;text-align:center;display:grid;justify-items:center;gap:4px;color:var(--ink);min-height:120px;transition:transform .12s}
+.clue:hover,.cl:hover{transform:translateY(-3px);border-color:var(--wood2)}
+.clue .ic,.cl .ic{font-size:38px;line-height:1.1}
+.clue span,.cl span{font-size:14px;line-height:1.35}
+.clue.got{border-color:var(--good);background:#eef8f1}
+.clue.got::after{content:"수첩 보관";position:absolute;top:6px;right:6px;font-family:Jua;font-size:12px;color:#fff;background:var(--good);border-radius:8px;padding:0 6px}
+.cl b{font-family:Jua;font-size:20px;font-weight:400}
+.cl small{font-size:13px;color:var(--mute)}
+.grid.c4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cl.won{border-color:var(--good);background:#eef8f1;opacity:.6;cursor:default}.cl.won:hover{transform:none}
+/* 모달 */
+.modal{position:fixed;inset:0;background:rgba(15,8,4,.72);z-index:40;display:grid;place-items:center;padding:12px}
+.sheet{background:var(--paper);color:var(--ink);border-radius:20px;width:min(640px,100%);max-height:92vh;overflow:auto;padding:20px;border:4px solid var(--wood2)}
+.sheet h2{font-size:26px;color:var(--wood)}
+.sheet .ic{font-size:44px}
+.doc p{margin:10px 0}
+.doc .note{font-size:14px;color:var(--mute);background:#f6efe4;border-radius:10px;padding:8px 10px}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0;font-size:15px}
+.chain span{background:#e9f4ec;border:2px solid #b9dcc5;border-radius:10px;padding:2px 8px}
+.chain i{font-style:normal;color:var(--mute)}
+.check{margin-top:14px;border-top:2px dashed var(--line);padding-top:12px}
+.nb{display:grid;gap:10px}
+.card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;align-items:start;background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px}
+.card .ic{font-size:34px;grid-row:span 3}
+.card b{font-family:Jua;font-weight:400;font-size:18px}
+.card p{margin:0;font-size:15px;color:var(--mute)}
+.card .btn{margin-top:6px;min-height:44px;font-size:17px;justify-self:start}
+/* 이펙트 */
+#fx{position:fixed;inset:0;z-index:60;pointer-events:none;display:grid;place-items:center}
+#fx.flash{animation:flash .9s}
+@keyframes flash{0%,30%{background:rgba(255,255,255,.95)}100%{background:transparent}}
+#fx.redf{animation:redf .7s}
+@keyframes redf{0%{background:rgba(229,56,59,.45)}100%{background:transparent}}
+.big{font-family:"Black Han Sans";font-size:clamp(54px,15vw,120px);color:var(--red);-webkit-text-stroke:3px #fff;text-shadow:0 8px 0 #7a1214;transform:rotate(-8deg);animation:slam .9s forwards}
+@keyframes slam{0%{transform:scale(3) rotate(-8deg);opacity:0}20%{transform:scale(1) rotate(-8deg);opacity:1}80%{opacity:1}100%{opacity:0}}
+.gav{font-size:clamp(90px,24vw,160px);transform-origin:85% 85%;animation:gav .8s forwards}
+@keyframes gav{0%{transform:rotate(-60deg);opacity:1}35%{transform:rotate(10deg)}50%{transform:rotate(0)}85%{opacity:1}100%{opacity:0}}
+/* 퀴즈·작성 */
+.statement{background:#fff;border:2px solid var(--line);border-radius:16px;padding:14px 16px;font-size:18px}
+.qtimer{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:10px 0}
+.qtimer i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#ff9d3a);width:100%}
+.vp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.vp .op{grid-template-columns:minmax(0,1fr);text-align:center;font-family:Jua;font-size:19px}
+textarea,input[type=text]{width:100%;border-radius:14px;border:2px solid var(--line);background:#fff;color:var(--ink);font:17px/1.55 "Gowun Dodum",sans-serif;padding:12px}
+textarea{min-height:140px;resize:vertical}
+.kw{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.kw span{border:2px solid var(--line);border-radius:999px;padding:0 10px;font-size:14px;color:var(--mute)}
+.kw span.on{border-color:var(--gold);background:#fff3c4;color:#6b4a00;font-weight:700}
+.cnt{font-size:14px;color:var(--mute)}
+/* 타이틀·엔딩 */
+.screen{padding:clamp(20px,5vw,44px) max(4vw,14px) 48px}
+.title{background:radial-gradient(circle at 50% 0,#8a4b2a,#3a2014 70%);border-radius:24px;padding:clamp(22px,5vw,40px);text-align:center;position:relative;overflow:hidden}
+.title .crowd{font-size:clamp(30px,7vw,48px);letter-spacing:4px}
+.title h1{font-family:"Black Han Sans";font-size:clamp(38px,9vw,66px);color:var(--gold);text-shadow:0 5px 0 #6b3a1b;margin:10px 0 4px}
+.title h2{font-size:clamp(22px,5vw,32px);color:#fff}
+.title p{max-width:560px;margin:14px auto 0;color:#f3e2cf}
+.setup{background:var(--paper);color:var(--ink);border-radius:20px;padding:18px;margin-top:18px}
+.setup label{font-family:Jua;font-size:17px}
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 0;padding:0;list-style:none}
+.facts li{background:#f6efe4;border-radius:12px;padding:8px;text-align:center;font-size:14px;color:var(--mute)}
+.facts b{display:block;font-family:Jua;font-weight:400;font-size:17px;color:var(--wood)}
+details{margin-top:12px;font-size:15px}summary{cursor:pointer;font-family:Jua;min-height:32px}
+.rcpt{background:var(--paper);color:var(--ink);border-radius:18px;padding:18px;margin-top:16px;border:3px dashed var(--wood3)}
+.rcpt h3{font-size:24px;color:var(--wood);text-align:center}
+.rcpt table{width:100%;border-collapse:collapse;margin-top:10px;font-size:16px}
+.rcpt td{padding:7px 2px;border-bottom:1px dotted var(--line)}
+.rcpt td:last-child{text-align:right;white-space:nowrap;font-family:"Black Han Sans"}
+.rcpt tr.tot td{border-top:3px double var(--wood);font-size:20px;color:var(--wood)}
+.grade{text-align:center;margin-top:18px}
+.grade .bh{font-size:clamp(34px,8vw,54px);color:var(--gold);text-shadow:0 4px 0 #6b3a1b;display:block}
+.seal{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;background:#203a4a;border-radius:18px;padding:16px;margin-top:16px}
+.seal .ic{font-size:48px}
+.verdict{margin-top:16px;background:#fffaf0;color:#2b1a0c;border:6px double var(--wood2);border-radius:8px;padding:22px 20px;position:relative}
+.verdict h3{text-align:center;font-family:"Black Han Sans";font-size:30px;letter-spacing:12px;color:var(--wood)}
+.verdict dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:14px 0 0}
+.verdict dt{font-family:Jua;color:var(--wood)}.verdict dd{margin:0}
+.verdict .stamp{position:absolute;right:16px;bottom:16px;width:84px;height:84px;border:4px solid var(--red);color:var(--red);border-radius:50%;display:grid;place-items:center;text-align:center;font-family:Jua;font-size:14px;line-height:1.15;transform:rotate(-12deg);opacity:.85}
+.verdict .date{text-align:right;margin-top:14px;padding-right:96px;font-size:15px}
+.stage.compact{height:clamp(170px,24vh,210px)}.stage.compact .portrait{width:64px;font-size:38px;border-width:3px}.stage.compact .speaker{top:5%}.stage.compact .plate{font-size:13px}
+.lock{min-height:22px;margin:0 0 8px;font-family:Jua;font-size:15px;color:#a0522d}
+.op.wait{opacity:.55;text-decoration:none;cursor:wait}
+.slots{display:grid;gap:8px;margin-bottom:12px}
+.slot{display:grid;gap:2px;text-align:left;background:#fff8ec;border:2px dashed var(--wood3);border-radius:14px;padding:10px 12px;min-height:56px;color:var(--ink);font-size:16px}
+.slot small{font-family:Jua;color:var(--wood);font-size:14px}
+.slot.ok{border:2px solid var(--good);background:#eef8f1}.slot.no{border:2px solid var(--red);background:#ffecec}
+.frags{display:grid;gap:8px}
+.frag{text-align:left;background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 12px;min-height:48px;font-size:16px;color:var(--ink)}
+.frag:hover:not(:disabled){border-color:var(--wood2)}.frag:disabled{opacity:.3;cursor:default}
+.press{margin-top:10px;background:#fff;border-left:5px solid var(--wood2);border-radius:8px;padding:8px 10px;font-size:16px;color:var(--wood)}
+.nav .pr{min-width:auto;padding:0 14px;font-family:Jua;font-size:16px}
+.btn.red:disabled{opacity:.35;box-shadow:none}
+.chunks{display:flex;flex-wrap:wrap;gap:8px}
+.chunk{background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px 12px;min-height:44px;font-size:17px;color:var(--ink);text-align:left}
+.chunk:hover{border-color:var(--gold);background:#fff9df}
+.guide{margin:0 0 10px;padding-left:22px;color:var(--mute);font-size:15px}
+@media(max-width:600px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.facts{grid-template-columns:repeat(2,minmax(0,1fr))}.vp{grid-template-columns:minmax(0,1fr)}.jname{font-size:11px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<section id="titleScr" class="screen">
+  <div class="title">
+    <div class="crowd" aria-hidden="true">🐯 🐙 🌻 🪸 🪱 🐝 🦭 🐸 🐌</div>
+    <h1>억대 연봉 생태 변호사</h1>
+    <h2>지구를 변호하라! (풀버전)</h2>
+    <p>지구 곳곳의 생명체들이 소송을 걸었다. 그리고 숲속 동물들은 인간을 고소했다. 증거를 모으고, 검사의 압박을 버티고, “이의 있소!”를 외쳐 몸값을 억대로 올려라!</p>
+  </div>
+  <div class="setup">
+    <label for="nm">변호사 이름</label>
+    <input type="text" id="nm" maxlength="12" placeholder="예) 김지구" autocomplete="off">
+    <ul class="facts">
+      <li><b>4막 구성</b>약 45~50분</li>
+      <li><b>시작 선임비</b>1,000만 원</li>
+      <li><b>신뢰도</b>하트 5개</li>
+      <li><b>증거 카드</b>6장</li>
+    </ul>
+    <div class="row">
+      <button class="btn gold" id="startBtn" type="button">변호사 선임 수락하기</button>
+      <label class="row" style="gap:8px;margin-top:14px;font-family:Gowun Dodum;font-size:16px"><input type="checkbox" id="snd" checked style="width:22px;height:22px"> 효과음</label>
+    </div>
+    <details>
+      <summary>선생님용 안내</summary>
+      <p>동아출판 중학교 도덕① Ⅳ. 자연과의 관계 ‘1. 도덕적 고려의 대상은 어디까지일까?’의 법정 ‘역지사지’ 역할극과 중단원 마무리 문항을 바탕으로 만들었어요. 제1막 증거 수집 → 제2막 제1재판(의뢰인 4명 모두 차례로 변호, 순서는 자유) → 제3막 제2재판(인간 대표) → 제4막 관점 판별 퀴즈 6문제와 최후 변론 작성 순서예요. 의뢰인마다 대사·선택지·변론서·증언이 모두 달라요. 한 사건을 이길 때마다 하트가 1개 회복돼요.</p><p>대충 고르지 못하도록 넣은 장치: 선택지는 4개이고 그럴듯한 함정이 섞여 있어요(질문과 다른 내용을 답하거나 결론이 인간 이익으로 빠지는 선택지). 질문마다 몇 초 동안 선택지가 잠겨 먼저 읽게 하고, 정답 뒤에는 ‘근거 대기’로 개념을 한 번 더 확인해요. 재판마다 조각 7개로 변론서를 조립하고, 검사의 증언은 모두 추궁한 뒤 모순된 증언을 직접 지목해야 해요. 증거 확인을 틀리면 8초 동안 자료를 다시 읽어야 하고, 퀴즈는 관점과 결정적 단서를 함께 찾아야 하며, 최후 변론은 60자 이상이에요.</p>
+    </details>
+  </div>
+</section>
+
+<div id="game" class="hide" style="display:flex;flex-direction:column;flex:1">
+  <header class="hud">
+    <div class="act" id="act">제1막</div>
+    <div class="tools"><button type="button" id="nbBtn" aria-label="증거 수첩 열기">📒 <span id="nbCnt">0</span></button></div>
+    <div class="feebox"><small>누적 선임비</small><span id="fee" class="bh">1,000만 원</span><span id="combo"></span></div>
+    <div id="hearts" aria-label="신뢰도"></div>
+  </header>
+  <div class="stage room" id="stage">
+    <div class="speaker"><div class="portrait" id="portrait"></div><div class="plate" id="plate"></div></div>
+    <div class="jury" id="jury"></div>
+    <div id="floats"></div>
+  </div>
+  <div class="box" id="box">
+    <div id="vDlg" class="dlg" role="button" tabindex="0" aria-label="다음 대사"><span class="name" id="dName"></span><div class="txt" id="dTxt"></div><div class="nexthint" id="dHint">▼ 화면을 누르면 다음으로</div></div>
+    <div id="vAlt" class="hide"></div>
+  </div>
+</div>
+
+<section id="endScr" class="screen hide"></section>
+
+</div>
+<div class="modal hide" id="modal"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="fx"></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const MARTEN='<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="17" cy="15" rx="7" ry="8" fill="#3b2412"/><ellipse cx="47" cy="15" rx="7" ry="8" fill="#3b2412"/><ellipse cx="17" cy="16" rx="3" ry="4" fill="#c98f5a"/><ellipse cx="47" cy="16" rx="3" ry="4" fill="#c98f5a"/><ellipse cx="32" cy="33" rx="21" ry="19" fill="#4a2c16"/><path d="M12 44Q32 66 52 44Q32 54 12 44Z" fill="#f2b632"/><ellipse cx="32" cy="40" rx="10" ry="7" fill="#ead2a8"/><circle cx="24" cy="29" r="3.2" fill="#111"/><circle cx="40" cy="29" r="3.2" fill="#111"/><circle cx="25" cy="28" r="1" fill="#fff"/><circle cx="41" cy="28" r="1" fill="#fff"/><ellipse cx="32" cy="37" rx="3.4" ry="2.4" fill="#111"/></svg>';
+const CAST={
+ narr:{n:'내레이션',a:'📜'},beaver:{n:'사무장 비버',a:'🦫'},me:{n:'나 (변호사)',a:'💼'},
+ judge:{n:'판사',a:'👩‍⚖️'},pros:{n:'인간 측 검사 강이득',a:'🕴️'},
+ frog:{n:'개구리 판사',a:'🐸'},snail:{n:'달팽이 검사',a:'🐌'},seal:{n:'바다표범',a:'🦭'},
+ coral:{n:'산호초',a:'🪸'},worm:{n:'지렁이',a:'🪱'},bee:{n:'꿀벌',a:'🐝'},tiger:{n:'호랑이',a:'🐯'},
+ dog:{n:'유기견 증인',a:'🐶'},sun:{n:'해바라기 증인',a:'🌻'},marten:{n:'담비 증인',svg:MARTEN},
+ dev:{n:'개발 회사 측 증인',a:'🏗️'},pig:{n:'돼지 증인',a:'🐷'}
+};
+const JURY=[{n:'호랑이',a:'🐯'},{n:'문어',a:'🐙'},{n:'담비',svg:MARTEN},{n:'해바라기',a:'🌻'},{n:'인간',a:'🧑'}];
+const JL={
+ good:['어흥, 제법인데?','오, 일리 있는데? 다리 여덟 개로 박수!','논리가 탄탄하군.','고개가 저절로 끄덕여져요!','와, 반박을 못 하겠다.'],
+ human:['결국 인간 이익 얘기잖소?','저건 너무 인간 중심적이야!','쓸모로만 따지면 곤란한데…','제 가치는 쓸모에만 있지 않아요…','사람한테 좋다는 것만으론 약한데?'],
+ bad:['크르릉… 이건 아니오!','먹물 뿜고 싶다!','변호사 맞소?','고개가 푹 숙여져요…','아니, 그걸 변론이라고…'],
+ cheer:['어흐흥! 통쾌하오!','이의 있소 최고!','결정타로군!','햇빛보다 눈부신 반론!','소름 돋았어!']
+};
+const MOOD={good:'👍',human:'🤨',bad:'😠',cheer:'🤩'};
+/* ===== 증거 카드 ===== */
+const CARDS=[
+{id:'bee',ic:'🐝',t:'아인슈타인의 꿀벌 경고',
+ doc:'<p>“꿀벌이 사라지면 인류도 4년 안에 사라질 것이다.” 물리학자 아인슈타인이 했다고 널리 알려진 경고예요.</p><p>꿀벌은 이 꽃 저 꽃을 오가며 꽃가루를 옮겨요. 이 <b>꽃가루받이</b> 덕분에 식물은 열매와 씨앗을 맺고, 그 열매와 씨앗은 다른 동물과 인간의 먹이가 돼요. 우리가 먹는 많은 과일과 채소도 꽃가루받이에 기대고 있어요.</p><p class="note">알아 두기: 아인슈타인이 실제로 이 말을 했다는 기록은 확인되지 않아 출처는 논란이 있어요. 그래도 이 경고가 널리 퍼진 까닭은 꿀벌과 인간이 생태계 안에서 깊이 연결되어 있기 때문이에요.</p>',
+ cq:'이 자료를 법정 증거로 쓸 때 바르게 이해한 것은?',co:['출처는 확인되지 않았지만, 꽃가루받이로 꿀벌과 인간이 이어져 있다는 점이 핵심이다.','아인슈타인이 직접 한 말이 확실하므로 과학적으로 증명된 예언이다.','꿀벌이 4년 안에 모두 사라진다는 사실을 알려 주는 자료이다.']},
+{id:'worm',ic:'🪱',t:'토양·갯벌 지렁이 생태 보고서',
+ doc:'<p>지렁이는 흙 속의 썩은 잎 같은 유기물과 흙을 먹고 배설하면서 흙을 잘게 부수고, 영양분이 풍부한 흙으로 바꿔요. 지렁이가 판 굴은 땅의 <b>숨구멍</b>이 되어 공기와 물이 잘 스며들고, 식물은 더 넓게 뿌리를 뻗을 수 있어요.</p><p>갯벌의 <b>갯지렁이</b>도 진흙 속을 파고들며 갯벌 깊이 산소를 전달하고, 유기물을 분해해 갯벌을 건강하게 해요.</p><p>또 지렁이는 새, 두더지 같은 여러 동물의 먹이가 되어 생태계의 <b>먹이 사슬</b>을 이어 줘요.</p>',
+ cq:'보고서 내용과 일치하는 것은?',co:['지렁이가 판 굴은 흙의 숨구멍이 되고, 지렁이는 먹이 사슬도 잇는다.','지렁이는 흙 속 해충을 잡아먹어 식물을 지키는 사냥꾼이다.','갯지렁이는 갯벌의 산소를 빼앗아 갯벌을 해친다.']},
+{id:'desc',ic:'🤖',t:'데카르트의 ‘동물 기계론’ 비판 자료',
+ doc:'<p>17세기 철학자 데카르트는 동물을 영혼이 없고 본능에 따라서만 움직이는 <b>기계와 같은 존재</b>로 보았다고 알려져 있어요. 이런 생각은 “이성을 지닌 인간만 도덕적으로 고려하면 된다”는 <b>인간 중심주의</b>의 근거가 되기도 했어요.</p><p>그러나 오늘날 많은 사람은 동물도 <b>쾌락과 고통을 느끼고 감정을 가진 존재</b>라고 봐요. <b>동물 중심주의</b>는 바로 이 점을 근거로, 동물도 도덕적으로 고려해야 한다고 주장해요.</p>',
+ cq:'자료 내용을 바르게 정리한 것은?',co:['동물을 기계로 보는 생각은 인간 중심주의의 근거가 되었고, 동물 중심주의는 이를 비판한다.','데카르트는 동물도 고통을 느낀다고 주장하며 동물 중심주의를 처음 열었다.','동물 중심주의는 식물까지 포함한 모든 생명을 고려하자는 입장이다.']},
+{id:'pet',ic:'🐶',t:'반려동물 유기 실태 보고서',
+ doc:'<p>반려동물을 키우는 인구가 늘고 있지만, 동시에 <b>버려지는 동물의 숫자도 늘고</b> 있어요.</p><p>버려지는 이유로는 경제적 부담, 이사 같은 주거 환경의 변화, 그리고 “더 이상 예쁘지 않다”는 단순한 변심 등이 꼽혀요.</p><p>버려진 동물은 굶주림과 질병, 사고의 위험 속에서 살아가야 해요. 인간의 사정 때문에 고통을 느끼는 생명이 고통받고 있는 거예요.</p>',
+ cq:'보고서 내용과 일치하는 것은?',co:['버려지는 이유 중에는 단순한 변심도 있으며, 고통을 느끼는 동물이 그 피해를 입는다.','반려동물 인구가 줄면서 버려지는 동물의 수도 함께 줄고 있다.','동물이 버려지는 가장 큰 이유는 동물이 사납기 때문이다.']},
+{id:'seal',ic:'🦭',t:'백령도 점박이물범 보호 사례',
+ doc:'<p>인천광역시 옹진군 백령면 북동쪽 <b>하늬바다</b>에는 ‘<b>물범바위</b>’가 있어요. <b>천연기념물 제331호</b>로 지정된 점박이물범이 바위에 올라와 쉬는 곳이에요.</p><p>사람들은 이곳의 물범을 보호하기 위해 노력하고 있어요. 물범이 그 자체로 존중받아야 할 소중한 생명이자 생태계의 구성원이기 때문이에요.</p>',
+ cq:'자료 내용과 일치하는 것은?',co:['점박이물범은 천연기념물로 지정되어 보호받고 있으며, 인간이 보호를 실천한 사례이다.','물범바위는 강원도 동해안에 만든 관광용 인공 섬이다.','점박이물범은 사람이 기르려고 백령도로 옮겨 온 동물이다.']},
+{id:'web',ic:'🕸️',t:'인간과 생태계의 연결망 지도',
+ doc:'<p>생태계의 모든 구성원은 먹고 먹히고, 집을 내어 주고, 꽃가루를 옮기며 <b>서로 기대어</b> 살아가요.</p><div class="chain"><span>산호초</span><i>→ 집</i><span>작은 물고기</span><i>→ 먹이</i><span>큰 물고기</span><i>→ 먹이</i><span>바닷새·인간</span></div><div class="chain"><span>지렁이</span><i>→ 비옥한 흙</i><span>식물</span><i>→ 꽃가루받이</i><span>꿀벌</span><i>→ 열매·씨앗</i><span>동물·인간</span></div><p>한 고리가 끊어지면 그 영향은 연결망을 따라 멀리 퍼져요. 그리고 <b>인간도 이 연결망의 한 부분</b>이에요.</p>',
+ cq:'지도가 말해 주는 것으로 알맞은 것은?',co:['한 고리가 끊어지면 영향이 연결망을 따라 퍼지며, 인간도 그 일부이다.','인간은 연결망 맨 꼭대기에서 모든 생물을 관리하는 존재이다.','생물들은 각자 따로 살아가므로 한 종이 사라져도 영향이 거의 없다.']}
+];
+/* 근거 대기 선택지 묶음 */
+const WHY={
+ C:['공감','도덕적 책임','생명의 본래적 가치','생태계의 상호 의존'],
+ V:['인간 중심주의','동물 중심주의','생명 중심주의','생태 중심주의']
+};
+/* ===== 제1재판 의뢰인 ===== */
+const CLIENTS=[
+{id:'coral',ic:'🪸',n:'산호초',d:'바다를 오래 지켜 온 바다 생물의 집',
+ intro:['변호사님… 반가워요. 저는 산호초예요. 지구의 생명체 중에서도 아주 오래전부터 바다를 지켜 왔어요. 인간보다 훨씬 오래요.','그런데 요즘은 사는 게 정말 힘들어요. 바다로 흘러드는 쓰레기에 몸이 덮이고, 바닷물이 뜨거워지면 몸이 하얗게 변해 버려요.','제가 없다면… 이 바다는 누가 지킬 수 있을까요? 변호사님만 믿을게요.'],
+ r:[
+ {pre:[['pros','1라운드! 자, 변호인. 산호초가 지금 구체적으로 뭐가 힘들다는 겁니까?'],['pros','역할이니 가치니 하는 건 나중에 듣겠습니다. 지금은 ‘어려움’만 구체적으로 진술하세요!']],q:'의뢰인이 지금 겪고 있는 어려움을 구체적으로 진술하세요.',o:[
+  ['바다로 흘러든 쓰레기가 산호를 덮고, 바닷물 온도가 오르면 산호가 하얗게 변하는 백화 현상이 일어나 산호초가 죽어 가고 있습니다.',2,'정확해요! 쓰레기와 뜨거워진 바다라는 구체적인 어려움을 진술했어요.'],
+  ['산호초는 수많은 물고기가 알을 낳고 숨는 보금자리로서, 바다 생태계를 떠받치는 중요한 역할을 맡고 있습니다.',1,'내용은 좋지만 질문은 ‘지금 겪는 어려움’이었어요. 역할은 다음 라운드에서 말할 차례예요. 질문을 끝까지 읽어야 해요!'],
+  ['산호초가 무너지면 파도를 막아 주던 방파제 역할이 사라져, 바닷가 마을이 큰 파도 피해를 입게 됩니다.',1,'인간 마을이 입을 피해를 말했어요. 의뢰인 자신이 겪는 어려움을 진술해야 해요.'],
+  ['산호초는 바위처럼 단단한 무생물이라 아픔은 없지만, 쓰레기 때문에 보기 흉해지는 문제를 겪고 있습니다.',0,'산호는 무생물이 아니라 산호충이라는 작은 동물이 모여 만든 생명이에요. 의뢰인을 돌 취급했어요!']],
+  why:{q:'방금 변론처럼 의뢰인의 처지를 구체적으로 헤아리는 것은 어떤 마음에서 출발할까요?',set:'C',a:0,e:'다른 생명의 입장이 되어 그 고통과 위험에 반응하는 마음, 바로 공감이에요.'}},
+ {pre:[['pros','2라운드! 힘든 건 알겠어요. 그런데 산호초가 생태계에서 하는 일이 뭡니까?'],['pros','솔직히 바닷속 예쁜 장식 아닙니까? 장식 하나 없어진다고 큰일 나나요?']],q:'생태계 안에서 의뢰인이 하는 역할을 증명하세요.',o:[
+  ['산호초는 수많은 바다 생물이 알을 낳고 숨고 먹이를 찾는 보금자리입니다. 산호초가 무너지면 그곳에 기대어 사는 생물들도 살 곳을 잃습니다.',2,'훌륭해요! 산호초는 바다 생물들의 보금자리예요. 생태계 구성원은 서로 기대어 살아가요.'],
+  ['산호초 주변에는 물고기가 많이 모여 어부들의 소중한 일터가 되고, 바닷가 사람들의 생계를 든든하게 지켜 줍니다.',1,'역할을 인간의 일자리 기준으로만 설명했어요. 인간에게 주는 이익만 강조하면 감점!'],
+  ['산호초는 수천 년에 걸쳐 자라 온 생명으로서, 어떤 역할을 하든 상관없이 그 자체로 소중한 존재입니다.',1,'옳은 말이지만 이번 질문은 ‘생태계 속 역할’이에요. 이 근거는 3라운드에서 빛날 거예요.'],
+  ['산호초는 바닷속 작은 물고기를 잡아먹어, 바다 생물의 수를 조절하는 최상위 포식자 역할을 합니다.',0,'사실과 달라요. 산호초는 최상위 포식자가 아니라 바다 생물들의 집이에요.']],
+  why:{q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:3,e:'산호초에 기대어 사는 생물들을 말했으니, 생태계 구성원이 서로 기대어 사는 상호 의존이 근거예요.'}},
+ {pre:[['pros','3라운드! 흐흐, 물고기 집이라 이거죠? 좋아요. 그런데 말입니다.'],['pros','물고기 집이든 뭐든, 인간에게 직접 이익이 안 된다면 굳이 보호할 필요는 없지 않습니까? 우리 예산은 소중하거든요!']],q:'검사의 함정! 인간의 이익을 기준으로 삼지 않고 반박하세요.',o:[
+  ['생명의 가치는 인간에게 이익이 되는지로 정해지지 않습니다. 산호초는 오랜 세월 살아남으려 애써 온 생명으로서 그 자체로 소중합니다.',2,'함정 격파! 모든 생명은 살아남기 위해 노력하는 존재로서 그 자체로 가치가 있어요.'],
+  ['지금은 이익이 없어 보여도 산호에서 새로운 약 성분이 발견될 수 있으니, 미래의 이익을 위해서라도 보호해야 합니다.',1,'함정에 걸렸어요! ‘미래의 이익’도 결국 인간 이익을 기준으로 삼은 거예요.'],
+  ['산호초가 사라지면 바다 생태계가 무너지고, 그 피해가 결국 인간에게 돌아오기 때문에 반드시 보호해야 합니다.',1,'상호 의존은 좋은 근거지만, ‘인간에게 피해가 돌아온다’로 끝나 검사의 기준(인간 이익)을 벗어나지 못했어요.'],
+  ['산호초는 인간보다 훨씬 오래 지구에 살아왔으니, 인간보다 더 높은 가치를 지닌 우월한 존재입니다.',0,'오래 살았다고 더 우월하다는 것도 생명에 순위를 매기는 생각이에요. 모든 생명은 그 자체로 소중해요.']],
+  why:{q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:2,e:'쓸모나 이익과 상관없이 그 자체로 소중하다는 것, 생명의 본래적 가치예요.'}}
+ ],
+ brief:{frag:[
+  ['판사님, 저는 쓰레기에 덮이고 뜨거워진 바다 때문에 하얗게 변해 죽어 가고 있습니다.',0],
+  ['저는 수많은 바다 생물이 알을 낳고 숨는 보금자리가 되어 바다를 지켜 왔습니다.',1],
+  ['저 역시 살아남으려 애쓰는 생명으로서 그 자체로 존중받아야 합니다.',2],
+  ['제가 사라지면 다이빙 관광객이 줄어 바닷가 마을의 수입이 줄어듭니다.',-1,'인간의 이익이에요.'],
+  ['저는 바다에서 가장 강한 생물로서 다른 생물들을 다스려 왔습니다.',-1,'사실과 달라요.'],
+  ['저는 알록달록 아름다우니 사진 명소로 남겨 주시면 좋겠습니다.',-1,'겉모습은 보호의 근거가 될 수 없어요.'],
+  ['바다는 넓으니 제가 사라지면 다른 곳에 새 산호초를 만들면 됩니다.',-1,'의뢰인 스스로 가치를 부정했어요.']]},
+ obj:{pre:[['pros','4라운드! 마지막입니다. 제 결정적 증언을 들어 보시죠!']],test:['바다는 무척 넓어서, 생물마다 사는 구역이 따로따로 정해져 있습니다.','그러니 산호초 한 곳이 사라져도 다른 바다 생물이나 인간에게는 아무 영향이 없습니다.','결국 산호초 문제는 산호초가 알아서 해결할 일입니다.'],
+  press:['바닷속에도 주소가 있는 셈이죠. 물고기는 물고기 동네, 산호는 산호 동네!','네, 영향이 없다니까요. 산호초에 살던 물고기요? 다른 데로 이사 가면 그만입니다.','산호초가 변호사까지 부른 건 좀 지나친 것 같군요. 흐흐.'],bad:1,card:'web',hint:'생물들이 정말 서로 아무 영향을 주지 않을까요? 생명들이 어떻게 이어져 있는지 보여 주는 증거를 찾아보세요.',
+  ok:[['me','이의 있소! 이 ‘인간과 생태계의 연결망 지도’를 보십시오!'],['me','산호초는 작은 물고기의 집이고, 작은 물고기는 큰 물고기의 먹이이며, 큰 물고기는 바닷새와 인간의 먹이입니다. 한 고리가 끊기면 연결망 전체가 흔들립니다!'],['pros','으, 으윽…! 바다가 이렇게 이어져 있었다니!']]},
+ win:[['coral','변호사님… 제 목소리를 들어 주셔서 고마워요. 바닷속 친구들도 다 같이 기뻐하고 있어요!']]},
+{id:'worm',ic:'🪱',n:'지렁이',d:'땅속에서 흙을 일구는 숨은 일꾼',
+ intro:['변호사님, 안녕하세요. 저는 땅속에서 하루 종일 흙을 먹고 뱉으며 일하는 지렁이예요.','그런데 요즘은 살아가기가 너무 어려워요. 인간들이 아스팔트와 시멘트로 땅을 덮어 버렸거든요.','비 오는 날 땅 위로 나오면… 자동차가 저를 밟고 지나가요. 저를 좀 지켜 주세요.'],
+ r:[
+ {pre:[['pros','1라운드! 지렁이가 힘들다고요? 땅속에서 편하게 사는 것 같던데요?'],['pros','역할 자랑은 나중에! 지금은 지렁이가 겪는 ‘어려움’만 구체적으로 말해 보세요.']],q:'의뢰인이 지금 겪고 있는 어려움을 구체적으로 진술하세요.',o:[
+  ['땅이 아스팔트와 시멘트로 덮여 지렁이가 살 흙이 사라지고 있고, 땅 위로 나오면 자동차와 사람에게 밟혀 목숨을 잃습니다.',2,'정확한 진술이에요! 살 흙이 사라지고, 땅 위에서는 목숨까지 위험해요.'],
+  ['지렁이는 흙을 먹고 뱉으며 땅을 기름지게 만들어, 식물이 잘 자랄 수 있는 환경을 만들어 주고 있습니다.',1,'좋은 내용이지만 질문은 ‘어려움’이었어요. 역할은 2라운드에서!'],
+  ['지렁이가 줄면서 텃밭 흙이 딱딱해져, 농사짓는 사람들이 비료를 더 많이 사야 하는 어려움이 생겼습니다.',1,'인간 농부의 어려움을 말했어요. 의뢰인 자신의 어려움을 진술해야 해요.'],
+  ['지렁이는 비 오는 날이면 땅 위로 놀러 나왔다가 집을 잃어버리는 일이 잦아, 길 찾기를 가장 어려워합니다.',0,'놀러 나오는 게 아니에요. 흔히 땅속이 물에 잠겨 숨쉬기 어려워 나온다고 알려져 있어요.']],
+  why:{q:'방금 변론처럼 의뢰인의 처지를 구체적으로 헤아리는 것은 어떤 마음에서 출발할까요?',set:'C',a:0,e:'지렁이의 입장이 되어 그 고통에 반응하는 마음, 공감이에요.'}},
+ {pre:[['pros','2라운드! 땅속에서 꿈틀대는 게 무슨 대단한 역할입니까?'],['pros','제 눈엔 그냥 흙 속의 국수 가락으로밖에 안 보이는데요?']],q:'생태계 안에서 의뢰인이 하는 역할을 증명하세요.',o:[
+  ['지렁이는 흙을 먹고 뱉으며 땅에 숨구멍을 내고 흙을 기름지게 합니다. 또 새와 두더지의 먹이가 되어 먹이 사슬을 잇습니다.',2,'완벽해요! 흙을 건강하게 하고 먹이 사슬을 잇는 생태계의 중요한 일원이에요.'],
+  ['지렁이 덕분에 흙이 좋아져서 농부들은 비료를 덜 쓰고도 농사를 지을 수 있어 비용을 크게 아낄 수 있습니다.',1,'인간의 비용 절약만 말했어요. 인간에게 주는 이익만 강조하면 감점!'],
+  ['지렁이는 아스팔트에 밀려 살 곳을 잃고 있으니, 그 불쌍한 처지를 생각해서라도 반드시 보호받아야 합니다.',1,'어려움과 동정만 다시 말했어요. 질문은 ‘생태계 속 역할’이에요.'],
+  ['지렁이는 땅속의 해충을 하나하나 잡아먹어, 식물의 뿌리를 지키는 생태계의 경비원 역할을 합니다.',0,'지렁이는 흙과 썩은 유기물을 먹어요. 해충 사냥꾼이 아니에요. 증거 자료를 다시 떠올려 보세요!']],
+  why:{q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:3,e:'흙·식물·새·두더지로 이어지는 관계, 생태계의 상호 의존이에요.'}},
+ {pre:[['pros','3라운드! 좋아요, 흙이 좋아진다 칩시다. 그래도 말이에요.'],['pros','인간에게 직접 이익이 안 되면 보호 안 해도 되잖아요? 게다가 솔직히… 징그럽기까지 한데!']],q:'검사의 함정! 인간의 이익이나 생김새를 기준으로 삼지 않고 반박하세요.',o:[
+  ['생김새나 쓸모로 생명의 가치를 매길 수 없습니다. 지렁이도 살아가려 애쓰는 생명으로서 그 자체로 존중받아야 합니다.',2,'함정 격파! 생명은 예쁜지, 쓸모 있는지와 상관없이 그 자체로 소중해요.'],
+  ['징그럽다는 편견을 없애도록 귀여운 캐릭터로 홍보하면, 사람들이 지렁이를 좋아하게 되어 자연스럽게 보호할 것입니다.',1,'인기가 기준이 되면 인기 없는 생명은 또 버려져요. 검사의 기준을 그대로 따랐어요.'],
+  ['지렁이가 사라지면 흙이 나빠지고 농작물이 줄어, 결국 인간이 먹을 것이 부족해지니 보호해야 합니다.',1,'결론이 ‘인간이 먹을 것’이에요. 함정에 걸렸어요!'],
+  ['지렁이는 고통을 아주 강하게 느끼는 동물이므로, 고통을 크게 느끼는 생명부터 순서대로 보호해야 합니다.',0,'고통의 크기로 생명의 순위를 매기는 건 질문과 달라요. 지렁이가 ‘아주 강하게’ 느낀다는 근거도 없고요.']],
+  why:{q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:2,e:'생김새나 쓸모와 상관없이 그 자체로 소중하다는 것, 생명의 본래적 가치예요.'}}
+ ],
+ brief:{frag:[
+  ['판사님, 저는 아스팔트에 살 흙을 빼앗기고, 땅 위로 나오면 차에 밟히고 있습니다.',0],
+  ['저는 흙에 숨구멍을 내고 기름지게 만들어 식물이 뿌리를 뻗도록 돕습니다.',1],
+  ['저도 살아가려 애쓰는 생명이니, 생김새와 상관없이 존중해 주세요.',2],
+  ['제가 있으면 낚시 미끼를 쉽게 구할 수 있어 인간에게 이득입니다.',-1,'인간의 이익이에요.'],
+  ['저는 땅속 해충을 잡아먹어 농작물을 지키는 경비원입니다.',-1,'사실과 달라요.'],
+  ['저는 징그러우니 사람들 눈에 띄지 않게만 해 주시면 됩니다.',-1,'스스로 가치를 깎아내렸어요.'],
+  ['비료만 있으면 흙은 괜찮으니 제 걱정은 안 하셔도 됩니다.',-1,'의뢰인의 역할을 부정했어요.']]},
+ obj:{pre:[['pros','4라운드! 자, 이제 결정타를 날려 드리죠.']],test:['지렁이는 흙 속에 사는 작은 동물이라 사람들 눈에 잘 띄지 않습니다.','흙은 그냥 흙일 뿐, 지렁이가 있든 없든 땅의 상태는 똑같습니다.','비료만 충분히 주면 식물은 얼마든지 잘 자랍니다.'],
+  press:['그러니 사람들이 신경 안 쓰는 것도 무리가 아니죠.','흙에 숨구멍이요? 흙이 숨을 쉬다니, 무슨 동화 같은 소리를!','요즘 비료가 얼마나 좋은데요. 지렁이 없이도 끄떡없습니다.'],bad:1,card:'worm',hint:'흙이 정말 ‘그냥 흙’일까요? 지렁이가 흙에 무슨 일을 하는지 조사한 증거가 있었어요.',
+  ok:[['me','이의 있소! ‘토양·갯벌 지렁이 생태 보고서’를 보십시오!'],['me','지렁이는 흙을 잘게 부수고 숨구멍을 내어 공기와 물이 스며들게 합니다. 갯벌의 갯지렁이는 갯벌 깊이 산소를 전달하지요. 지렁이가 사라지면 흙도, 갯벌도 숨이 막힙니다!'],['pros','크, 크헉…! 흙이 숨을 쉰다니…!']]},
+ win:[['worm','변호사님! 이제 땅 위로 나와도 덜 무서울 것 같아요. 꿈틀꿈틀 감사 인사 드려요!']]},
+{id:'bee',ic:'🐝',n:'꿀벌',d:'꽃과 열매를 잇는 작은 날갯짓',
+ intro:['윙윙… 변호사님, 큰일이에요. 요즘 벌집으로 돌아오지 못하는 친구들이 너무 많아요.','농약, 병, 갑자기 변하는 날씨 때문에 꿀벌들이 사라지고 있대요.','저희가 사라지면… 꽃도, 열매도 함께 위험해질 거예요. 도와주세요!'],
+ r:[
+ {pre:[['pros','1라운드! 꿀벌이 힘들다고요? 꽃밭에서 날아다니며 노는 것 같던데.'],['pros','역할 이야기는 나중에. 지금은 꿀벌이 겪는 ‘어려움’만 구체적으로 말해 보세요!']],q:'의뢰인이 지금 겪고 있는 어려움을 구체적으로 진술하세요.',o:[
+  ['농약과 병, 갑작스러운 날씨 변화 때문에 꿀벌들이 벌집으로 돌아오지 못하고 무리 지어 사라지고 있습니다.',2,'정확한 진술이에요! 꿀벌들이 여러 원인으로 사라지고 있어요.'],
+  ['꿀벌은 꽃가루를 옮겨 식물이 열매와 씨앗을 맺게 하는, 생태계에서 아주 중요한 연결 고리 역할을 합니다.',1,'좋은 내용이지만 질문은 ‘어려움’이었어요. 역할은 2라운드에서!'],
+  ['꿀벌이 줄면서 과수원 농가가 꽃가루받이를 사람 손으로 해야 해, 일손과 비용이 크게 늘어나는 어려움을 겪고 있습니다.',1,'인간 농가의 어려움을 말했어요. 의뢰인 자신의 어려움을 진술해야 해요.'],
+  ['일벌은 원래 오래 살지 못하는 곤충이라, 수가 줄어드는 것은 자연스러운 일일 뿐 특별한 어려움은 없습니다.',0,'의뢰인의 어려움을 부정했어요. 한 마리의 수명과 무리 전체가 사라지는 문제는 전혀 달라요.']],
+  why:{q:'방금 변론처럼 의뢰인의 처지를 구체적으로 헤아리는 것은 어떤 마음에서 출발할까요?',set:'C',a:0,e:'꿀벌의 입장이 되어 그 위험에 반응하는 마음, 공감이에요.'}},
+ {pre:[['pros','2라운드! 꿀벌이 하는 일이요? 꿀 만드는 거 말고 뭐가 있죠?'],['pros','꿀은 마트에서 사면 됩니다. 땅땅!']],q:'생태계 안에서 의뢰인이 하는 역할을 증명하세요.',o:[
+  ['꿀벌은 꽃가루를 옮겨 식물이 열매와 씨앗을 맺게 합니다. 그 열매와 씨앗은 다시 새와 작은 동물들의 먹이가 됩니다.',2,'훌륭해요! 꿀벌의 꽃가루받이는 식물과 동물을 이어 주는 연결 고리예요.'],
+  ['꿀벌은 꿀과 밀랍, 프로폴리스 같은 귀한 재료를 만들어 인간의 건강과 생활에 두루 쓰이게 해 줍니다.',1,'인간이 얻는 재료만 말했어요. 인간에게 주는 이익만 강조하면 감점!'],
+  ['꿀벌은 농약과 병 때문에 무리 지어 사라지고 있어서, 하루빨리 보호받아야 하는 처지에 놓여 있습니다.',1,'어려움을 다시 말했어요. 질문은 ‘생태계 속 역할’이에요.'],
+  ['꿀벌은 꽃의 꿀을 먼저 모두 가져가, 다른 곤충들이 꽃에 오지 못하도록 막아 생태계를 정리합니다.',0,'사실과 달라요. 꿀벌은 다른 곤충을 막는 문지기가 아니에요.']],
+  why:{q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:3,e:'꽃→열매·씨앗→동물로 이어지는 관계, 생태계의 상호 의존이에요.'}},
+ {pre:[['pros','3라운드! 흐흐, 꽃가루를 옮긴다고요? 그럼 사람이 붓으로 하면 되죠!'],['pros','벌 대신 사람이 꽃가루를 묻히면 됩니다. 인간에게 손해만 없으면 꿀벌이 사라져도 상관없지 않습니까?']],q:'검사의 함정! 인간의 이익을 기준으로 삼지 않고 반박하세요.',o:[
+  ['꿀벌은 인간을 위한 도구가 아닙니다. 대신할 수 있느냐와 상관없이, 살아가려 애쓰는 생명으로서 그 자체로 가치가 있습니다.',2,'함정 격파! 생명은 다른 무엇으로 대신할 수 있는 도구가 아니라 그 자체로 소중해요.'],
+  ['사람이 붓으로 꽃가루를 옮기려면 인건비가 엄청나게 들어서, 꿀벌을 보호하는 편이 훨씬 더 경제적입니다.',1,'돈 계산으로 반박했어요. 만약 붓질이 더 싸다면 꿀벌은 버려져도 될까요?'],
+  ['사람이 들판의 모든 꽃을 붓질할 수는 없어서 식물이 줄고, 결국 인간의 먹거리까지 위험해질 것입니다.',1,'연결을 말했지만 결론이 ‘인간의 먹거리’예요. 함정에 걸렸어요!'],
+  ['꿀벌은 사람보다 꽃가루를 훨씬 잘 옮기는 뛰어난 존재이므로, 능력이 뛰어난 생명일수록 더 보호받아야 합니다.',0,'능력으로 생명의 순위를 매기는 건 ‘이성이 뛰어난 인간만 가치 있다’는 생각과 같은 구조예요.']],
+  why:{q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:2,e:'대신할 수 있느냐와 상관없이 그 자체로 소중하다는 것, 생명의 본래적 가치예요.'}}
+ ],
+ brief:{frag:[
+  ['판사님, 저희는 농약과 병, 변하는 날씨 때문에 벌집으로 돌아오지 못하고 있어요.',0],
+  ['저희는 꽃가루를 옮겨 식물이 열매와 씨앗을 맺게 하고, 그 열매는 동물들의 먹이가 됩니다.',1],
+  ['저희는 인간의 도구가 아니라, 그 자체로 소중한 생명입니다.',2],
+  ['저희가 없으면 꿀값이 올라 인간이 큰 손해를 봅니다.',-1,'인간의 이익이에요.'],
+  ['저희는 다른 곤충이 꽃에 오지 못하게 막아 생태계를 정리합니다.',-1,'사실과 달라요.'],
+  ['사람이 붓으로 대신할 수 있다면 저희는 없어도 괜찮습니다.',-1,'스스로 가치를 부정했어요.'],
+  ['저희는 침이 있으니 무서워서라도 건드리지 마세요.',-1,'두려움은 도덕적 고려의 근거가 아니에요.']]},
+ obj:{pre:[['pros','4라운드! 마지막으로, 제가 과학적 사실을 말씀드리죠.']],test:['꿀벌은 지구에 사는 수많은 곤충 가운데 한 종입니다.','꿀벌이 줄어드는 건 날씨 탓이지, 인간 탓만은 아닙니다.','꿀벌이 사라지면 인류도 위험하다고 걱정한 사람은 지금까지 아무도 없습니다.'],
+  press:['곤충 종류가 얼마나 많은데요. 한 종쯤이야.','농약이요? 그건 꿀벌이 알아서 피하면 되죠.','인류가 위험하다니요, 그런 경고는 들어 본 적도 없습니다!'],bad:2,card:'bee',hint:'정말 아무도 꿀벌 걱정을 한 적이 없을까요? 아주 유명한 경고가 있었어요.',
+  ok:[['me','이의 있소! 꿀벌이 사라지면 인류도 위험해진다는 경고, 아인슈타인이 했다고 전해지는 이 유명한 경고를 보십시오!'],['me','누가 처음 말했든, 이 경고가 널리 퍼진 이유는 분명합니다. 꿀벌의 꽃가루받이가 열매와 씨앗을, 결국 동물과 인간의 먹거리를 떠받치기 때문입니다!'],['pros','윽…! 아무도 걱정 안 했다는 말은… 취, 취소하겠습니다!']]},
+ win:[['bee','윙윙윙! 변호사님 최고예요! 꽃밭의 친구들에게 이 소식을 전하러 갈게요!']]},
+{id:'tiger',ic:'🐯',n:'호랑이',d:'숲의 균형을 지키던 최상위 포식자',
+ intro:['어흥… 변호사 양반, 반갑소. 나는 이 땅의 숲을 누비던 호랑이요.','숲은 길과 마을로 잘려 나갔고, 사람들은 가죽과 뼈를 노리고 우리를 사냥했지. 이제 이 땅의 숲에서 우리를 보기는 정말 어렵게 되었소.','무섭다고만 하지 말고, 우리의 이야기도 들어 주시오.'],
+ r:[
+ {pre:[['pros','1라운드! 호랑이가 힘들다고요? 산에서 제일 센 동물 아닙니까?'],['pros','역할 자랑은 나중에! 제일 센 동물이 뭐가 ‘어렵다’는 건지 구체적으로 말해 보시죠!']],q:'의뢰인이 지금 겪고 있는 어려움을 구체적으로 진술하세요.',o:[
+  ['숲이 도로와 마을로 잘려 나가 살 곳을 잃었고, 가죽과 뼈를 노린 사냥 때문에 이 땅의 숲에서 그 수가 크게 줄었습니다.',2,'정확한 진술이에요! 서식지 파괴와 사냥이 호랑이를 사라지게 했어요.'],
+  ['호랑이는 사슴과 멧돼지의 수를 조절하는 최상위 포식자로서, 숲의 균형을 지키는 중요한 역할을 맡고 있습니다.',1,'좋은 내용이지만 질문은 ‘어려움’이었어요. 역할은 2라운드에서!'],
+  ['호랑이가 사라지면서 옛 민화와 이야기 속에 살아 있던 호랑이 문화도 사람들에게서 점점 잊혀 가고 있습니다.',1,'사람들의 문화가 잊히는 문제를 말했어요. 호랑이 자신이 겪는 어려움을 진술해야 해요.'],
+  ['호랑이는 먹이를 지나치게 많이 먹어서, 숲속 동물이 모자라게 된 것이 가장 큰 어려움입니다.',0,'사실과 달라요. 호랑이가 줄어든 원인은 서식지 파괴와 사냥이에요.']],
+  why:{q:'방금 변론처럼 의뢰인의 처지를 구체적으로 헤아리는 것은 어떤 마음에서 출발할까요?',set:'C',a:0,e:'호랑이의 입장이 되어 그 고통에 반응하는 마음, 공감이에요.'}},
+ {pre:[['pros','2라운드! 호랑이는 다른 동물을 잡아먹기만 하잖아요.'],['pros','그런 동물이 생태계에 무슨 도움이 됩니까? 오히려 해롭지 않나요?']],q:'생태계 안에서 의뢰인이 하는 역할을 증명하세요.',o:[
+  ['최상위 포식자인 호랑이는 사슴과 멧돼지 같은 초식 동물의 수를 조절해, 풀과 어린나무가 지나치게 뜯어 먹히지 않도록 숲의 균형을 지킵니다.',2,'훌륭해요! 최상위 포식자는 먹이 사슬의 균형을 지키는 중요한 역할을 해요.'],
+  ['호랑이가 있으면 멧돼지가 줄어들어 농작물 피해가 줄어들기 때문에, 농민들에게 큰 도움이 됩니다.',1,'농민의 이익만 말했어요. 인간에게 주는 이익만 강조하면 감점!'],
+  ['호랑이는 사냥과 서식지 파괴로 거의 사라졌으니, 남은 호랑이라도 지키는 것이 우리 모두의 의무입니다.',1,'어려움을 다시 말했어요. 질문은 ‘생태계 속 역할’이에요.'],
+  ['호랑이는 약한 동물을 골라 없애서 숲에 강한 동물만 남게 해 주므로, 숲을 더 강하게 만드는 역할을 합니다.',0,'포식자는 약한 동물을 없애는 게 아니라 개체 수의 균형을 맞춰요. 강한 동물만 남는다는 건 오해예요.']],
+  why:{q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:3,e:'호랑이→초식 동물→풀과 어린나무로 이어지는 관계, 생태계의 상호 의존이에요.'}},
+ {pre:[['pros','3라운드! 흐흐, 균형이요? 좋습니다. 하지만 현실을 보시죠.'],['pros','호랑이가 없어도 인간은 잘 삽니다. 오히려 더 안전하죠! 인간에게 이익이 없는데 왜 보호합니까?']],q:'검사의 함정! 인간의 이익이나 편의를 기준으로 삼지 않고 반박하세요.',o:[
+  ['호랑이는 인간을 위해 존재하는 것이 아닙니다. 자기 방식대로 살아가려 애쓰는 생명으로서 그 자체로 존중받아야 합니다.',2,'함정 격파! 다양한 생명은 인간을 위해 존재하는 것이 아니에요. 그 자체로 가치 있어요.'],
+  ['호랑이를 숲에 되살리면 생태 관광객이 몰려와 지역 경제가 살아나니, 인간에게도 충분히 이익이 됩니다.',1,'관광 수입이라는 인간의 이익으로 반박했어요. 함정에 걸렸어요!'],
+  ['호랑이가 사라지면 초식 동물이 늘어 숲이 망가지고, 결국 산사태 같은 피해가 사람에게 돌아옵니다.',1,'연결을 말했지만 결론이 ‘사람이 입을 피해’예요. 검사의 기준을 벗어나지 못했어요.'],
+  ['인간의 안전도 중요하니, 호랑이는 동물원 안에서만 안전하게 보호하는 것이 가장 올바른 방법입니다.',0,'인간의 편의를 기준으로 생명이 사는 방식을 정해 버렸어요.']],
+  why:{q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:2,e:'인간을 위해 존재하지 않고 그 자체로 소중하다는 것, 생명의 본래적 가치예요.'}}
+ ],
+ brief:{frag:[
+  ['판사, 우리는 숲이 길과 마을로 잘려 나가고 사냥까지 당해 이 땅에서 사라져 가고 있소.',0],
+  ['우리는 사슴과 멧돼지의 수를 조절해 숲의 풀과 어린나무를 지켜 왔소.',1],
+  ['우리는 인간을 위해 사는 게 아니오. 우리 삶 그 자체로 존중받아야 하오.',2],
+  ['우리를 지키면 관광객이 늘어 마을이 부자가 될 것이오.',-1,'인간의 이익이에요.'],
+  ['우리는 약한 동물을 없애 숲에 강한 동물만 남게 하오.',-1,'포식자의 역할을 잘못 이해했어요.'],
+  ['사람들이 무서워하니 동물원에서만 살게 해 주시오.',-1,'인간의 편의에 맞춘 요구예요.'],
+  ['우리는 사나우니 사라지는 것이 자연의 이치요.',-1,'스스로 가치를 부정했어요.']]},
+ obj:{pre:[['pros','4라운드! 마지막으로 철학적인 이야기를 해 드리죠.']],test:['호랑이는 숲에서 가장 힘센 맹수입니다.','이런 동물은 영혼 없는 기계와 같아서 고통도 감정도 느끼지 못합니다.','그러니 사냥을 당해도 미안해할 필요가 없습니다.'],
+  press:['힘센 건 인정하죠. 그래서 다들 무서워하는 거고요.','본능대로 움직이는 기계, 그게 동물입니다. 아프다고 느끼는 건 사람뿐이에요.','기계가 고장 났다고 슬퍼하는 사람은 없잖아요?'],bad:1,card:'desc',hint:'동물이 정말 고통을 못 느끼는 기계일까요? 이 생각이 어디서 왔고 무엇이 문제인지 다룬 자료가 있었어요.',
+  ok:[['me','이의 있소! ‘데카르트의 동물 기계론 비판 자료’를 보십시오!'],['me','동물을 영혼 없는 기계로 보는 생각은 인간만 고려하면 된다는 인간 중심주의의 근거였습니다. 하지만 동물도 쾌락과 고통을 느끼고 감정을 가진 존재입니다!'],['pros','기, 기계가 아니었다고…?! 크으윽!']]},
+ win:[['tiger','어흐흥… 고맙소, 변호사 양반. 언젠가 다시 숲을 누빌 날을 기다리겠소.']]}
+];
+/* ===== 상태 ===== */
+let S,shown=1000,adv=null,typing=false,finishType=()=>{},pick=null,ac=null,ttimer=null;
+const fmt=n=>{const sg=n<0?'-':'',a=Math.abs(n);if(a===0)return '0원';if(a>=10000){const e=Math.floor(a/10000),m=a%10000;return sg+e+'억'+(m?' '+m.toLocaleString()+'만':'')+' 원'}return sg+a.toLocaleString()+'만 원'};
+function beep(f,d,type){if(!$('snd').checked)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=type||'triangle';o.frequency.value=f;g.gain.setValueAtTime(.16,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+const ding=()=>{beep(660,.12);setTimeout(()=>beep(990,.2),90)};
+function hud(){
+  $('hearts').innerHTML=Array.from({length:5},(_,i)=>`<span class="${i<S.hearts?'':'lost'}">${i<S.hearts?'❤️':'🖤'}</span>`).join('');
+  $('combo').textContent=S.combo>=2?`COMBO ×${S.combo}`:'';$('nbCnt').textContent=S.cards.length;
+}
+function animFee(){const from=shown,to=S.fee,t0=performance.now(),dur=RM?1:800;const f=now=>{const p=Math.min(1,(now-t0)/dur);shown=Math.round(from+(to-from)*(1-(1-p)**3));$('fee').textContent=fmt(shown);if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f);const e=$('fee');e.classList.remove('bump');void e.offsetWidth;e.classList.add('bump')}
+function floatTxt(t,cls){const d=document.createElement('div');d.className='fl '+cls;d.textContent=t;$('floats').appendChild(d);setTimeout(()=>d.remove(),1500)}
+function money(d){const before=S.fee;S.fee=Math.max(0,S.fee+d);if(d>0)S.plus+=d;else S.minus+=before-S.fee;floatTxt((d>0?'+':'')+fmt(d),d>0?'up':'down');animFee();hud()}
+function gain(base,first){
+  let g=base;if(first){S.combo++;const b=Math.min(S.combo-1,4)*1000;g+=b;if(S.combo>=2)setTimeout(()=>floatTxt(`COMBO ×${S.combo} 보너스 +${fmt(b)}`,'cb'),250)}else{g=Math.round(base/2);S.combo=0}
+  money(g);ding();return g}
+function fx(kind){const f=$('fx');f.className='';void f.offsetWidth;
+  if(kind==='obj'){f.className='flash';f.innerHTML='<div class="big">이의 있소!</div>';beep(220,.08,'square');setTimeout(()=>beep(440,.3,'square'),80)}
+  else{f.className='redf';f.innerHTML='<div class="gav">🔨</div>';beep(110,.35,'sawtooth');const st=$('stage');st.classList.remove('shake');void st.offsetWidth;st.classList.add('shake')}
+  setTimeout(()=>{f.innerHTML='';f.className=''},1100)}
+function penalize(tier){S.combo=0;if(tier===1){money(-1000);beep(240,.2)}else{money(-2000);S.hearts--;fx('gavel');hud();const lost=$('hearts').children[S.hearts];if(lost)lost.classList.add('brk')}hud()}
+function avatar(c){return c.svg||`<span aria-hidden="true">${c.a}</span>`}
+function speaker(k){const c=CAST[k];$('portrait').innerHTML=avatar(c);$('plate').textContent=k==='me'?S.name+' 변호사':c.n;const p=$('portrait');p.classList.remove('pop');void p.offsetWidth;p.classList.add('pop');$('dName').textContent=k==='me'?S.name+' 변호사':c.n}
+function setAct(t,bg){$('act').textContent=t;$('stage').className='stage '+(bg||'')}
+function jury(tag,all){
+  const pool=JL[tag],idx=all?[0,4,1,2,3]:shuffle([[0,2],[0,3],[0,4],[1,3],[1,4],[2,4]])[0];
+  document.querySelectorAll('.jb').forEach(b=>b.remove());
+  idx.forEach((i,n)=>{const jr=$('jury').children[i];jr.querySelector('.jmood').textContent=MOOD[tag];if(tag==='good'||tag==='cheer'){const f=jr.querySelector('.jface');f.classList.remove('jump');void f.offsetWidth;f.classList.add('jump')}
+    if(!all||n<2){const b=document.createElement('div');b.className='jb '+(tag==='cheer'?'good':tag);b.textContent=pool[i];jr.appendChild(b);setTimeout(()=>b.remove(),3200)}});
+}
+$('jury').innerHTML=JURY.map(j=>`<div class="jr"><div class="jface">${avatar(j)}</div><span class="jmood"></span><span class="jname">${j.n}</span></div>`).join('');
+/* ===== 대사 엔진 ===== */
+function view(v){$('vDlg').classList.toggle('hide',v!=='dlg');$('vAlt').classList.toggle('hide',v==='dlg');$('stage').classList.toggle('compact',v!=='dlg')}
+function typeTo(el,text){return new Promise(res=>{let i=0;typing=true;el.textContent='';
+  let tt;const done=()=>{clearTimeout(tt);el.textContent=text;typing=false;finishType=()=>{};res()};finishType=done;
+  if(RM||window.__fast)return done();const step=()=>{i+=1;el.textContent=text.slice(0,i);if(i>=text.length)done();else tt=setTimeout(step,32)};step()})}
+function advance(){if(!$('modal').classList.contains('hide'))return;if(typing){finishType();return}if(adv){const f=adv;adv=null;f()}}
+$('vDlg').addEventListener('click',advance);
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!$('vDlg').classList.contains('hide')&&!$('game').classList.contains('hide')&&document.activeElement.tagName!=='TEXTAREA'&&document.activeElement.tagName!=='INPUT'){e.preventDefault();advance()}});
+async function say(k,text){view('dlg');speaker(k);$('dHint').classList.remove('on');await typeTo($('dTxt'),text.replace(/\{name\}/g,S.name));$('dHint').classList.add('on');await new Promise(r=>adv=r);$('dHint').classList.remove('on')}
+async function lines(arr){for(const [k,t] of arr)await say(k,t)}
+const waitPick=()=>new Promise(r=>pick=r);
+$('vAlt').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(b&&!b.disabled&&pick){const f=pick;pick=null;f(b.dataset.p)}});
+async function feedback(tier,title,text,btn){
+  view('alt');$('vAlt').innerHTML=`<div class="fb t${tier}"><h3>${title}</h3><p>${text}</p></div><button class="btn${tier===2?' gold':''}" type="button" data-p="go">${btn||'계속'}</button>`;
+  $('vAlt').querySelector('.btn').focus();await waitPick();
+  if(S.hearts<=0)throw 'BANKRUPT';
+}
+/* 숙고 시간: 선택지를 잠깐 잠가 두고 문제를 먼저 읽게 한다 */
+async function think(sec,label){
+  const btns=[...$('vAlt').querySelectorAll('.op')];if(window.__fast||sec<=0)return;
+  const was=btns.map(b=>b.disabled);btns.forEach(b=>{b.disabled=true;b.classList.add('wait')});
+  const lab=$('vAlt').querySelector('.lock');
+  for(let s=sec;s>0;s--){if(lab)lab.textContent=`⏳ ${label} ${s}초`;await sleep(1000)}
+  if(lab)lab.textContent='이제 고를 수 있어요!';btns.forEach((b,i)=>{b.disabled=was[i];b.classList.remove('wait')});
+}
+async function ask(k,q,opts,base,why){
+  speaker(k);S.qs++;let first=true;const off=new Set();const order=shuffle(opts.map((_,i)=>i));
+  window.__cur={opts,order};let locked=true;
+  while(true){
+    view('alt');$('vAlt').innerHTML=`<span class="name">${S.name} 변호사의 선택</span><div class="q">${q}</div><p class="lock"></p><div class="opts">${order.map((i,n)=>`<button class="op" type="button" data-p="${i}" ${off.has(i)?'disabled':''}><b>${'ABCD'[n]}</b><span>${opts[i][0]}</span></button>`).join('')}</div>`;
+    if(locked){await think(6,'질문이 무엇을 묻는지, 선택지 넷을 끝까지 읽어 보세요');locked=false}
+    const i=+await waitPick();const [,tier,fb]=opts[i];
+    if(tier===2){if(first)S.ok++;const g=gain(base,first);jury('good');await feedback(2,first?'명변론! +'+fmt(g):'이번엔 맞았어요! +'+fmt(g),fb,'근거 대기로');if(why)await reason(k,why);return}
+    off.add(i);first=false;penalize(tier);jury(tier===1?'human':'bad');
+    await feedback(tier,tier===1?'아쉬워요! -1,000만 원':'의사봉 땅! -2,000만 원 · 하트 -1',fb+' 다시 골라 보세요.','다시 고르기');
+  }
+}
+/* 근거 대기: 정답을 고른 뒤, 그 근거가 된 개념을 맞혀야 보너스 */
+async function reason(k,w){
+  speaker(k==='pros'?'judge':k==='snail'?'frog':k);S.why++;const list=w.opts||WHY[w.set];window.__why=w.a;
+  view('alt');$('vAlt').innerHTML=`<span class="name">근거 대기 · 판사의 추가 질문</span><div class="q">${w.q}</div><p class="lock"></p><div class="vp">${list.map((v,i)=>`<button class="op" type="button" data-p="${i}">${v}</button>`).join('')}</div>`;
+  await think(3,'변론을 다시 떠올려 보세요');
+  const p=+await waitPick();
+  if(p===w.a){S.whyOk++;money(1000);ding();await feedback(2,`근거 정확! +1,000만 원`,w.e)}
+  else{money(-1000);S.combo=0;beep(240,.2);jury('human');await feedback(1,`근거가 틀렸어요 -1,000만 원 (정답: ${list[w.a]})`,w.e)}
+}
+/* 변론서 조립: 조각 7개 중 알맞은 3개를 ①②③ 칸에 넣는다 */
+async function brief(k,spec,slots,base){
+  speaker(k);S.qs++;let first=true;const order=shuffle(spec.frag.map((_,i)=>i));let fill=[null,null,null],marks=null;
+  window.__brief=spec.frag.map((f,i)=>[i,f[1]]);
+  while(true){
+    view('alt');
+    $('vAlt').innerHTML=`<span class="name">변론서 조립</span><div class="q">조각을 눌러 빈칸에 차례로 넣으세요. 칸을 누르면 비워져요.</div>
+     <div class="slots">${slots.map((s,i)=>`<button type="button" class="slot${marks?(marks[i]?' ok':' no'):''}" data-p="s${i}"><small>${'①②③'[i]} ${s}</small><span>${fill[i]===null?'비어 있음':spec.frag[fill[i]][0]}</span></button>`).join('')}</div>
+     <div class="frags">${order.map(i=>`<button type="button" class="frag" data-p="f${i}" ${fill.includes(i)?'disabled':''}>${spec.frag[i][0]}</button>`).join('')}</div>
+     <button class="btn gold" type="button" data-p="go" ${fill.includes(null)?'disabled':''}>변론서 제출</button>`;
+    const p=await waitPick();marks=null;
+    if(p[0]==='s'){fill[+p.slice(1)]=null;continue}
+    if(p[0]==='f'){const e=fill.indexOf(null);if(e>=0)fill[e]=+p.slice(1);continue}
+    const res=fill.map((f,i)=>spec.frag[f][1]===i);
+    if(res.every(Boolean)){if(first)S.ok++;const g=gain(base,first);jury('cheer',true);await feedback(2,'완벽한 변론서! +'+fmt(g),'① 지금 겪는 어려움, ② 지구에 기여하는 바, ③ 그 자체로 존중받아야 하는 까닭이 모두 제자리에 들어갔어요.');return}
+    first=false;penalize(1);jury('human');marks=res;
+    const why=fill.map((f,i)=>res[i]?'':`${'①②③'[i]} 칸: ${spec.frag[f][2]||'이 조각은 다른 칸에 들어가야 해요.'}`).filter(Boolean).join(' ');
+    await feedback(1,`${res.filter(Boolean).length} / 3칸 정답 · -1,000만 원`,why+' 빨간 칸을 고쳐 보세요.','다시 조립하기');
+  }
+}
+/* 증거 수첩 */
+function openNB(present){
+  return new Promise(res=>{
+    $('sheet').innerHTML=`<h2>📒 증거 수첩</h2><p style="margin:4px 0 12px;color:var(--mute)">${present?'제목만 보고 고르기 어렵다면 ‘내용 펼치기’로 다시 읽어 보세요.':'증거 카드를 눌러 내용을 다시 읽을 수 있어요.'}</p><div class="nb">${S.cards.map(id=>{const c=CARDS.find(x=>x.id===id);return `<div class="card"><span class="ic">${c.ic}</span><b>${c.t}</b><details><summary>내용 펼치기</summary><div class="doc">${c.doc}</div></details>${present?`<button class="btn red" type="button" data-c="${c.id}">이 증거 제시!</button>`:''}</div>`}).join('')||'<p>아직 모은 증거가 없어요.</p>'}</div><button class="btn ghost" type="button" data-c="">닫기</button>`;
+    $('modal').classList.remove('hide');$('sheet').scrollTop=0;$('sheet').querySelector('button').focus();
+    $('sheet').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;$('modal').classList.add('hide');$('sheet').onclick=null;res(b.dataset.c||null)};
+  })}
+$('nbBtn').addEventListener('click',()=>{if($('modal').classList.contains('hide'))openNB(false)});
+/* 이의 있소: 모순된 증언을 지목하고 알맞은 증거를 제시 */
+async function objection(k,o,base){
+  speaker(k);S.qs++;let first=true,idx=0;const pressed=new Set();window.__obj={card:o.card,bad:o.bad};
+  while(true){
+    view('alt');
+    const draw=()=>{$('vAlt').innerHTML=`<div class="testi"><div class="lab">증언 ${idx+1} / ${o.test.length} — 모순된 증언을 찾아라!</div><div class="txt">${o.test[idx]}</div>${pressed.has(idx)?`<div class="press">추궁 결과 · ${CAST[k].n}: “${o.press[idx]}”</div>`:''}</div><div class="nav"><button type="button" data-p="prev" aria-label="이전 증언">◀</button><button type="button" data-p="next" aria-label="다음 증언">▶</button><button type="button" class="pr" data-p="press">🔍 추궁하기</button></div><p class="hint">증언 ${o.test.length}개를 모두 추궁해야 이의를 제기할 수 있어요. (${pressed.size} / ${o.test.length})</p>${first?'':`<p class="hint">힌트: ${o.hint}</p>`}<button class="btn red" type="button" data-p="obj" ${pressed.size<o.test.length?'disabled':''}>이 증언에 이의 있소!</button>`};
+    draw();
+    let act;while((act=await waitPick())!=='obj'){if(act==='press'){pressed.add(idx);beep(500,.08)}else idx=(idx+(act==='next'?1:o.test.length-1))%o.test.length;draw()}
+    const c=await openNB(true);if(!c)continue;
+    if(c===o.card&&idx===o.bad){fx('obj');await sleep(RM?0:700);if(first)S.ok++;S.objs++;const g=gain(base,first);jury('cheer',true);await lines(o.ok);await feedback(2,'결정적 반론 성공! +'+fmt(g),'검사의 증언이 무너졌어요. 배심원석이 술렁입니다!');return}
+    first=false;penalize(0);jury('bad');
+    const msg=c===o.card?'증거는 맞았어요! 그런데 지금 지목한 증언은 그 증거와 부딪히지 않아요. 증거와 정면으로 맞부딪히는 증언을 골라 보세요.':idx===o.bad?`증언은 제대로 짚었어요! 그런데 그 증거로는 이 증언을 무너뜨릴 수 없어요. ${o.wrong&&o.wrong[c]||''}`:'증언도, 증거도 맞지 않아요. 증언을 하나씩 다시 읽고 추궁 결과를 살펴보세요.';
+    await feedback(0,'이의 기각! -2,000만 원 · 하트 -1',msg,'증언 다시 보기');
+  }
+}
+/* ===== 제1막 ===== */
+function clueModal(c){
+  return new Promise(res=>{
+    const ord=shuffle([0,1,2]);let lockT=null;
+    const draw=(state)=>{$('sheet').innerHTML=`<span class="ic">${c.ic}</span><h2>${c.t}</h2><div class="doc">${c.doc}</div><div class="check"><b class="jua" style="font-size:19px">핵심 확인: ${c.cq}</b><div class="opts" style="margin-top:8px">${ord.map((i,n)=>`<button class="op${state==='ok'&&i===0?' right':''}" type="button" data-k="${i}" ${state==='ok'||state==='no'?'disabled':''}><b>${'ABC'[n]}</b><span>${c.co[i]}</span></button>`).join('')}</div>${state==='no'?'<p class="lockc" style="color:var(--red)">자료와 맞지 않아요. 위 자료를 다시 꼼꼼히 읽어 보세요. <span id="lk">8</span>초 뒤 다시 고를 수 있어요.</p>':''}${state==='ok'?'<div class="fb t2" style="margin-top:10px"><h3>정확해요!</h3><p>증거 카드를 수첩에 담을 수 있어요.</p></div><button class="btn gold" type="button" data-k="take">수첩에 담기 (+500만 원)</button>':''}</div><button class="btn ghost" type="button" data-k="close">닫기</button>`};
+    draw('');$('modal').classList.remove('hide');$('sheet').scrollTop=0;
+    $('sheet').onclick=e=>{const b=e.target.closest('[data-k]');if(!b||b.disabled)return;const k=b.dataset.k;
+      if(k==='close'){clearInterval(lockT);$('modal').classList.add('hide');$('sheet').onclick=null;res(false)}
+      else if(k==='take'){$('modal').classList.add('hide');$('sheet').onclick=null;res(true)}
+      else if(+k===0){draw('ok');beep(660,.15);const t=$('sheet').querySelector('[data-k="take"]');t.scrollIntoView({block:'center',behavior:RM?'auto':'smooth'});t.focus({preventScroll:true})}
+      else{draw('no');beep(200,.2);$('sheet').scrollTop=0;let s=window.__fast?0:8;clearInterval(lockT);const tick=()=>{const l=$('lk');if(l)l.textContent=s;if(s<=0){clearInterval(lockT);draw('')}s--};tick();lockT=setInterval(tick,1000)}};
+  })}
+async function clueRoom(){
+  speaker('beaver');
+  while(true){
+    view('alt');const all=S.cards.length===CARDS.length;
+    $('vAlt').innerHTML=`<span class="name">사건 자료실</span><div class="q">단서를 눌러 조사하세요 (${S.cards.length} / 6)</div><div class="grid">${CARDS.map(c=>`<button class="clue${S.cards.includes(c.id)?' got':''}" type="button" data-p="${c.id}"><span class="ic">${c.ic}</span><span>${c.t}</span></button>`).join('')}</div>${all?'<button class="btn gold" type="button" data-p="done">조사 완료! 법정으로</button>':''}`;
+    const p=await waitPick();if(p==='done')return;
+    const c=CARDS.find(x=>x.id===p);const took=await clueModal(c);
+    if(took&&!S.cards.includes(c.id)){S.cards.push(c.id);money(500);ding();hud();jury('good')}
+  }
+}
+async function act1(){
+  setAct('제1막 · 사건 자료실','room');
+  await lines([
+   ['beaver','변호사님! 드디어 오셨군요. 저는 이 로펌의 사무장 비버예요. 댐도 잘 쌓지만 서류도 잘 쌓죠.'],
+   ['beaver','{name} 변호사님 앞으로 지구 곳곳의 생명체들이 사건을 의뢰했어요. 오늘 재판이 두 번이나 잡혀 있답니다.'],
+   ['beaver','첫 번째 재판의 제목은 “인간이 왜 당신까지 고려해야 합니까?” 두 번째는… 무려 “우리가 왜 인간까지 고려해야 합니까?”예요.'],
+   ['beaver','한쪽에선 생명체 편, 다른 쪽에선 인간 편을 들어야 해요. 그야말로 역지사지 재판이죠!'],
+   ['beaver','참, 선임비는 지금 1,000만 원에서 시작해요. 변론을 잘할수록 몸값이 쭉쭉 오르고, 연속으로 맞히면 콤보 보너스까지 붙어요.'],
+   ['beaver','반대로 엉뚱한 소리를 하면 판사님이 의사봉을 치면서 선임비가 깎이고, 신뢰도 하트가 하나씩 깨져요. 하트 5개가 다 깨지면… 파산이에요!'],
+   ['beaver','경고 하나 더! 이번 검사는 아주 교활해요. 선택지가 다 그럴듯해 보일 거예요. 질문이 ‘무엇을’ 묻는지 끝까지 읽고, 결론이 결국 ‘인간의 이익’으로 빠지는 함정을 조심하세요.'],
+   ['beaver','그리고 정답을 고르면 판사님이 “그 근거가 뭡니까?” 하고 꼭 다시 물어요. 공감, 도덕적 책임, 생명의 본래적 가치, 생태계의 상호 의존. 이 네 가지를 기억해 두세요.'],
+   ['beaver','법정에서 이기려면 증거가 필수예요. 사건 자료실에 단서 6개가 있어요. 하나씩 열어 꼼꼼히 읽고, 핵심을 확인한 뒤 수첩에 담아 주세요. 대충 고르면 8초 동안 다시 읽어야 해요!']]);
+  await clueRoom();
+  await lines([
+   ['beaver','완벽해요! 수첩이 두둑하네요. 위쪽 📒 버튼을 누르면 언제든 증거를 다시 읽을 수 있어요.'],
+   ['beaver','법정에서 검사가 증언을 늘어놓으면, 증언 하나하나를 🔍 추궁해서 속뜻을 캐내세요. 그다음 증거와 정면으로 부딪히는 증언을 골라 “이의 있소!”를 외치는 거예요.'],
+   ['beaver','법정에서는 증거 카드 제목만 보여요. 내용이 기억 안 나면 펼쳐서 다시 읽으세요. 자, 첫 번째 법정으로 출발!']]);
+}
+/* ===== 제2막 ===== */
+async function pickClient(){
+  const left=CLIENTS.filter(c=>!S.done.includes(c.id)).length;
+  view('alt');$('vAlt').innerHTML=`<span class="name">의뢰인 선택 · 승소 ${S.done.length} / 4</span><div class="q">${S.done.length?'다음으로 누구를 변호할까요?':'누구부터 변호할까요?'} (남은 의뢰인 ${left}명)</div><div class="grid c4">${CLIENTS.map(c=>{const d=S.done.includes(c.id);return `<button class="cl${d?' won':''}" type="button" data-p="${c.id}" ${d?'disabled':''}><span class="ic">${c.ic}</span><b>${c.n}</b><small>${d?'승소 완료':c.d}</small></button>`}).join('')}</div>`;
+  const id=await waitPick();return CLIENTS.find(c=>c.id===id);
+}
+const TAUNT=[
+ ['pros','변호인, 오늘 의뢰인이 넷이나 된다면서요? 한 명씩, 제 질문 세 번과 증언 하나를 버티고 변론서까지 완성해야 합니다. 흐흐흐.'],
+ ['pros','한 번 이겼다고 방심하지 마세요. 이번 의뢰인은 사정이 완전히 다르니까요!'],
+ ['pros','벌써 두 번이나…? 좋아요, 이번엔 제 질문이 더 날카로워질 겁니다.'],
+ ['pros','마지막 의뢰인이군요. 여기서 지면 저는… 아니, 질 리가 없죠! 흐흐흐.']];
+async function trial(c,n){
+  CAST.client={n:c.n,a:c.ic};
+  await say('narr',`제1재판 · 사건 ${n+1} / 4 — 의뢰인: ${c.n}`);
+  await say(...TAUNT[n]);
+  for(const t of c.intro)await say('client',t);
+  await say('me',`판사님, 저는 ${c.n}의 변호인 {name}입니다. 의뢰인의 이야기를 끝까지 들어 주십시오.`);
+  const base=[3000,4000,5000];
+  for(let r=0;r<3;r++){const R=c.r[r];await lines(R.pre);await ask('pros',R.q,R.o,base[r],R.why);
+    if(r===0)await say('client','변호사님… 제 마음을 정확히 말해 주셨어요.');
+    if(r===1)await say('judge','음… 생태계 안에서 그런 역할을 하고 있었군요. 계속하세요.')}
+  await lines([
+   ['judge','변호인, 지금까지의 변론을 정리해 정식 변론서로 제출하세요.'],
+   ['judge','변론서에는 ① 의뢰인이 지금 겪는 어려움, ② 지구에 기여하는 바, ③ 그 자체로 존중받아야 하는 까닭이 모두 들어가야 합니다.']]);
+  if(n===0)await say('beaver','(소곤소곤) 조각이 일곱 개인데 진짜는 세 개뿐이에요. 인간 이익, 틀린 사실, 의뢰인을 깎아내리는 조각을 걸러 내세요!');
+  await brief('judge',c.brief,['지금 겪는 어려움','지구에 기여하는 바','존중받아야 하는 까닭'],5000);
+  await lines(c.obj.pre);
+  await objection('pros',c.obj,7000);
+  await lines(c.win);
+  await say('judge',`${c.n} 사건 판결합니다. ${c.n}은(는) 그 자체로 소중한 생명이며 생태계 안에서 다른 생명들과 연결되어 있으므로, 인간은 ${c.n}을(를) 도덕적으로 고려해야 합니다. ${c.n} 측 승소! 땅! 땅!`);
+  S.done.push(c.id);
+  if(S.hearts<5){S.hearts++;hud();floatTxt('승소 보너스 ❤️ +1','cb');ding();await say('beaver','승소 보너스로 신뢰도 하트 하나가 회복됐어요! 다음 사건도 힘내요.')}
+}
+async function act2(){
+  setAct('제2막 · 제1재판','');
+  await lines([
+   ['narr','제1재판 — “인간이 왜 당신까지 고려해야 합니까?”'],
+   ['judge','개정합니다. 오늘 이 법정에는 산호초, 지렁이, 꿀벌, 호랑이. 네 생명체 대표가 “우리도 도덕적으로 고려해 달라”며 소송을 냈습니다.'],
+   ['judge','재판장으로서 먼저 묻겠습니다. 세상에는 이미 너무나 많은 생물이 존재합니다. 사회의 재원은 한정적인데, 도대체 왜 인간이 이 많은 생명을 고려해야 하나요?'],
+   ['pros','인간 측 검사 강이득입니다. 판사님 말씀이 딱 맞습니다! 인간 문제만 해도 산더미인데, 다른 생명까지 챙길 여유가 어디 있습니까?'],
+   ['beaver','(소곤소곤) 변호사님, 의뢰인 네 분을 모두 변호해야 해요! 순서는 마음대로 골라도 돼요. 한 사건에서 이길 때마다 하트가 하나씩 회복된대요.']]);
+  for(let n=0;n<CLIENTS.length;n++){
+    setAct(`제2막 · 제1재판 (${n+1}/4)`,'');
+    const c=await pickClient();await trial(c,n);
+    if(n<CLIENTS.length-1)await say('beaver',['좋아요, 첫 승소! 다음 의뢰인을 골라 주세요.','두 번째 승소! 이제 절반 왔어요.','세 번째 승소! 마지막 의뢰인만 남았어요.'][n]);
+  }
+  await lines([
+   ['judge','네 사건의 판결을 모두 마쳤습니다. 이제 제1재판 전체를 판결하겠습니다.'],
+   ['judge','생명의 가치는 인간에게 주는 이익만으로 정해지지 않습니다. 모든 생명은 살아남기 위해 애쓰는 존재로서 그 자체로 가치가 있으며, 서로 기대어 살아갑니다.'],
+   ['judge','또한 인간은 이성으로 다른 존재를 이해하고, 공감으로 그들의 고통에 반응할 수 있는 존재입니다. 따라서 인간은 이 생명들을 도덕적으로 고려해야 합니다.'],
+   ['judge','산호초, 지렁이, 꿀벌, 호랑이 측 전원 승소! 땅! 땅! 땅!'],
+   ['pros','크윽… 네 번 다 지다니. 하지만 다음 재판은 쉽지 않을걸요?'],
+   ['beaver','변호사님, 네 분 모두 승소예요! 그런데… 방금 숲에서 급한 연락이 왔어요!']]);
+}
+/* ===== 제3막 ===== */
+async function act3(){
+  setAct('제3막 · 제2재판','forest');
+  await lines([
+   ['beaver','큰일이에요! 숲속 동물들이 인간을 고소했대요. 이번엔 {name} 변호사님이 인간 대표 변호사로 서셔야 해요!'],
+   ['narr','제2재판 — “우리가 왜 인간까지 고려해야 합니까?” 장소: 깊은 숲속, 커다란 그루터기 법정.'],
+   ['frog','개굴! 개정합니다. 저는 이 숲의 재판장 개구리입니다. 많은 생물이 살아가는 지구가 지금 아파하고 있어요.'],
+   ['snail','검사 달팽이입니다. 천천히… 하지만 확실하게 말하겠습니다.'],
+   ['snail','인간종만 딱 사라진다면, 다른 모든 생물을 구할 수 있을 텐데… 우리가 왜 인간을 고려해야 하나요?'],
+   ['frog','인간 대표 변호인, 1라운드입니다. 감정에 호소하지 말고 근거로 답해 보세요. 개굴.']]);
+  await ask('snail','“인간만 사라지면 지구가 평화로울 것”이라는 주장에 근거를 들어 반론하세요.',[
+   ['인간도 생태계를 이루는 한 축입니다. 생태계의 한 고리가 사라지면 전체가 영향을 받듯, 인간이 사라지는 것도 다른 생명에게 큰 영향을 줍니다.',2,'핵심을 짚었어요! 인간도 생태계의 구성원으로서 다른 생명과 서로 의존하고 연결되어 있어요.'],
+   ['인간이 사라지면 사람이 기르던 반려동물과 가축은 돌봐 줄 이가 없어, 오히려 큰 어려움에 빠지게 될 것입니다.',1,'일부 동물에게는 맞는 말이지만, 생태계 전체와의 연결을 보여 주기엔 부족해요.'],
+   ['인간이 잘못을 저지른 건 맞지만, 앞으로는 정말 잘할 테니 한 번만 기회를 더 주시기를 간곡히 부탁드립니다.',1,'개구리 판사가 감정에 호소하지 말라고 했어요. 인간을 고려해야 할 ‘근거’가 빠졌어요.'],
+   ['인간은 다른 동물보다 뛰어난 이성을 가진 특별한 존재이니, 지구에 꼭 필요한 존재로서 마땅히 남아야 합니다.',0,'이성이 뛰어나서 특별하다는 건 인간 중심주의예요. 숲속 법정이 술렁여요!']],3000,
+   {q:'방금 변론의 핵심 근거가 된 개념은?',set:'C',a:3,e:'인간도 생태계의 한 고리로서 다른 생명과 연결되어 있다는 것, 생태계의 상호 의존이에요.'});
+  await lines([
+   ['snail','흥… 생태계의 한 축이라고요? 그렇다면 2라운드입니다.'],
+   ['snail','맞습니다. 인간은 우리보다 훨씬 똑똑하다는 이유로 마음껏 우리를 괴롭혀 왔습니다. 숲을 베고, 강을 막고, 쓰레기를 버렸죠.'],
+   ['snail','증거도 있어요. 반려동물 유기 실태 보고서! 인간은 “더 이상 예쁘지 않다”는 이유로도 동물을 버린대요. 어떤 동물은 심한 고통을 겪고 있다고 하더군요.'],
+   ['frog','개굴… 변호인, 이 지적을 부정할 수 있습니까?']]);
+  await ask('snail','달팽이 검사의 날카로운 지적에 어떻게 답할까요?',[
+   ['부정하지 않겠습니다. 인간만 가치 있다고 여긴 지나친 인간 중심주의 때문에 많은 생명이 고통받았고, 이를 깊이 반성합니다.',2,'솔직한 인정과 반성! 지나친 인간 중심주의를 돌아보는 것이 도덕적 고려를 넓히는 출발점이에요.'],
+   ['그것은 일부 사람들의 잘못일 뿐이며, 대부분의 인간은 동물을 사랑하고 아끼며 살아가고 있습니다.',1,'책임을 일부에게 돌렸어요. 인간 전체의 태도를 돌아보는 반성이 필요해요.'],
+   ['인간이 숲을 개발한 것은 살아남기 위한 어쩔 수 없는 선택이었으니, 너그럽게 이해해 주시기 바랍니다.',1,'변명으로 들려요. 먼저 잘못을 인정하고 반성해야 해요.'],
+   ['사자가 얼룩말을 잡아먹듯, 똑똑한 인간이 다른 생명을 이용하는 것도 자연의 질서일 뿐입니다.',0,'바로 그 생각이 달팽이 검사가 비판한 인간 중심주의예요!']],4000,
+   {q:'방금 변론에서 인간이 반성한 입장은 무엇일까요?',set:'V',a:0,e:'인간만이 이성을 지녀 가치 있다고 보는 인간 중심주의가 지나쳐서 생명을 함부로 대하는 문제가 생겼어요.'});
+  await lines([
+   ['frog','개굴… 반성하는 태도는 좋아요. 그런데 3라운드입니다.'],
+   ['frog','인간에게, 다른 생명을 위해 할 수 있는 특별한 능력이라도 있나요?']]);
+  await ask('frog','인간만이 가진 능력을 제시하세요.',[
+   ['인간은 이성으로 다른 생명의 처지를 이해하고, 공감으로 그 고통에 반응하며, 잘못을 바로잡을 도덕적 책임을 질 수 있습니다.',2,'완벽한 답이에요! 인간은 고통받는 생명에 공감하고 책임질 수 있는 존재예요.'],
+   ['인간은 뛰어난 과학 기술로 멸종 위기 동물을 복제하고, 사라진 숲도 기계로 되살릴 수 있는 능력이 있습니다.',1,'기술보다 중요한 건 다른 생명을 이해하고 공감하며 책임지려는 마음이에요.'],
+   ['인간은 말과 글을 사용할 수 있어서, 동물들의 이야기를 대신 기록하고 세상에 널리 알릴 수 있습니다.',1,'의미 있는 능력이지만, 핵심인 공감과 도덕적 책임이 빠졌어요.'],
+   ['인간은 지구에서 가장 강한 존재이므로, 마음만 먹으면 어떤 문제든 힘으로 해결할 수 있습니다.',0,'힘자랑은 도덕적 능력이 아니에요. 개구리 판사가 고개를 젓습니다.']],5000,
+   {q:'인간이 고통받는 생명에 대해 ‘유일하게’ 질 수 있는 것은?',opts:['도덕적 책임','지배할 권리','이용할 자유','소유권'],a:0,e:'인간은 고통받는 생명에 공감하고 책임질 수 있는 유일한 존재예요. 지배나 소유가 아니라 책임이에요.'});
+  await lines([
+   ['frog','좋아요. 인간 측 변론서를 정식으로 제출해 주세요.'],
+   ['frog','① 인간도 생태계의 일원이라는 점, ② 잘못의 인정과 반성, ③ 책임과 다짐. 이 순서로요. 개굴.']]);
+  await brief('frog',{frag:[
+   ['인간도 많은 생명과 함께 살아가는 생태계의 한 구성원입니다.',0],
+   ['우리의 행동이 다른 생명에게 고통을 주었음을 인정하고 반성합니다.',1],
+   ['그 잘못을 바로잡을 도덕적 책임을 다하겠습니다.',2],
+   ['인간은 이성을 가진 유일한 존재이므로 자연의 주인입니다.',-1,'인간 중심주의예요.'],
+   ['몇몇 사람의 잘못을 모든 인간의 잘못으로 볼 수는 없습니다.',-1,'책임을 피하는 말이에요.'],
+   ['과학 기술이 발전하면 자연 문제는 저절로 해결됩니다.',-1,'책임을 기술에 떠넘겼어요.'],
+   ['인간이 없으면 지구가 심심해질 것입니다.',-1,'근거가 없어요.']]},['인간도 생태계의 일원','인정과 반성','책임과 다짐'],5000);
+  await lines([
+   ['snail','능력이 있다고요? 변론서까지요? 하하… 천천히 웃어 드리죠.'],
+   ['snail','4라운드! 그럼 제 증언을 들어 보시죠. 아주 천천히요.']]);
+  await objection('snail',{test:['인간은 반성한다고 말로만 떠들 뿐입니다.','동물을 지키려고 실제로 무언가를 한 인간은 단 한 명도 없어요!','그러니 인간의 “책임” 같은 말은 믿을 수 없습니다.'],
+   press:['반성문은 껍데기보다 얇다고요.','천연기념물이요? 보호 구역이요? 그런 건 들어 본 적 없어요!','말보다 행동을 보여 주셔야죠, 천천히라도.'],bad:1,card:'seal',hint:'정말 인간이 아무것도 하지 않았을까요? 인간이 다른 생명을 지키려고 노력한 실제 사례를 찾아보세요.',wrong:{pet:'게다가 반려동물 유기 실태는 오히려 달팽이 검사 편에 서는 증거예요!'},
+   ok:[['me','이의 있소! ‘백령도 점박이물범 보호 사례’를 보십시오!'],['me','인천 옹진군 백령도 하늬바다의 물범바위. 사람들은 이곳에서 쉬는 점박이물범을 천연기념물 제331호로 지정해 보호하고 있습니다. 인간은 말뿐 아니라 행동으로도 책임을 실천할 수 있습니다!'],['snail','으… 으으… 껍데기 속으로 숨고 싶네요…!']]},7000);
+  await lines([
+   ['frog','개굴! 판결하겠습니다. 인간 역시 생태계의 한 축이며, 잘못을 반성하고 다른 생명에 공감하며 책임질 수 있는 존재입니다.'],
+   ['frog','따라서 숲속 동물들도 인간을 도덕적으로 고려하기로 합니다. 단! 인간은 오늘 한 약속을 꼭 지켜야 해요. 개굴개굴, 땅땅!'],
+   ['snail','흥, 지켜볼 거예요. 천천히… 아주 오래오래요.'],
+   ['beaver','변호사님, 두 재판 모두 끝났어요! 그런데 두 법정의 판사님이 함께 최종 판결을 하겠대요!']]);
+}
+/* ===== 제4막 ===== */
+const VP=['인간 중심주의','동물 중심주의','생명 중심주의','생태 중심주의'];
+const QUIZ=[
+ {k:'pros',c:['사자가 얼룩말을 잡아먹듯,','이성을 지닌 인간도','필요에 따라 동식물을 이용할 권리가 있다.'],a:0,clue:[1,2],e:'인간만 이성을 지녀 가치 있다고 보고 다른 생명을 이용해도 된다고 여기는 인간 중심주의예요. 반박하자면, 인간은 자연의 주인이 아니며 모든 생명은 자기 방식에 맞는 고유한 능력을 지녀요.'},
+ {k:'dog',c:['반려견이든 실험실 토끼든,','기쁨과 아픔을 느끼는 존재라면','인간의 편의 때문에 고통을 겪게 해서는 안 돼요.','하지만 아픔을 못 느끼는 존재까지 챙길 필요는 없어요.'],a:1,clue:[1,3],e:'‘아픔을 느끼는가’를 기준으로 고려 범위를 정하는 동물 중심주의예요. 마지막 문장이 생명 중심주의와 갈라지는 결정적 단서예요.'},
+ {k:'sun',c:['아픔을 느끼는지는 중요하지 않아요.','길가의 풀 한 포기도','햇빛을 향해 몸을 틀며 살아가려 애쓰잖아요.','그런 존재라면 존중받아야 해요.'],a:2,clue:[0,2],e:'살고자 하는 의지를 지닌 존재라면 고려해야 한다는 생명 중심주의예요. ‘아픔은 중요하지 않다’는 말이 동물 중심주의와 갈라지는 단서예요.'},
+ {k:'marten',c:['늑대 한 마리, 나무 한 그루를','따로따로 아끼는 것으로는 부족하오.','흙과 물, 공기와 생물이 얽혀 있는','숲 전체의 균형을 지켜야 하오.'],a:3,clue:[2,3],e:'개별 생명을 넘어 생태계 그 자체를 고려해야 한다는 생태 중심주의예요.'},
+ {k:'dev',c:['숲을 꼭 보호해야 합니다.','숲이 사라지면 우리가 마실 물과 숨 쉴 공기,','쓸 목재가 부족해지니까요.','결국 숲은 인간을 위해 존재하는 소중한 자원입니다.'],a:0,clue:[3],e:'숲을 보호하자고 하니 생태 중심주의처럼 보이지만, 숲을 ‘인간을 위한 자원’으로 보는 인간 중심주의예요. 함정 문제!'},
+ {k:'pig',c:['생태계 전체의 균형도 좋지만,','저는 비좁은 우리에 갇혀 지내는 돼지들이 걱정돼요.','고통을 느끼는 동물에게','불필요한 고통을 주는 일부터 멈춰야 해요.'],a:1,clue:[2,3],e:'고통을 느끼는 동물의 아픔을 기준으로 삼는 동물 중심주의예요. ‘생태계’라는 낱말에 속지 마세요!'}
+];
+async function quiz(){
+  for(let n=0;n<QUIZ.length;n++){const Q=QUIZ[n];speaker(Q.k);S.qs++;view('alt');window.__quiz={a:Q.a,clue:Q.clue};
+    const stm=Q.c.join(' ');
+    $('vAlt').innerHTML=`<span class="name">관점 판별 ${n+1} / 6 · ${CAST[Q.k].n}</span><div class="statement">${stm}</div><p class="lock"></p><div class="q" style="margin-top:10px">1단계 · 이 발언은 어떤 관점일까요?</div><div class="vp">${VP.map((v,i)=>`<button class="op" type="button" data-p="${i}">${v}</button>`).join('')}</div>`;
+    await think(5,'발언을 끝까지 읽어 보세요');
+    const p=+await waitPick();
+    if(p!==Q.a){penalize(0);jury('bad');await feedback(0,`땡! 정답은 ${VP[Q.a]}`,Q.e,'다음 증인');continue}
+    S.ok++;const g=gain(3000,true);jury('good');
+    view('alt');$('vAlt').innerHTML=`<span class="name">관점 판별 ${n+1} / 6 · 2단계</span><div class="q">정답! ${VP[Q.a]} +${fmt(g)}<br>그렇게 판단한 결정적 단서는 어느 부분인가요?</div><div class="chunks">${Q.c.map((t,i)=>`<button type="button" class="chunk" data-p="${i}">${t}</button>`).join('')}</div>`;
+    const c=+await waitPick();
+    if(Q.clue.includes(c)){S.whyOk++;money(1000);ding();await feedback(2,'단서까지 정확! +1,000만 원',Q.e)}
+    else{beep(240,.2);await feedback(1,'관점은 맞았지만 단서가 아쉬워요',`결정적 단서는 “${Q.c[Q.clue[Q.clue.length-1]]}” 부분이에요. ${Q.e}`)}
+  }
+}
+const KW=['공감','존중','책임','함께','보호','생명','가치','친구'];
+const MINLEN=60;
+async function closing(){
+  speaker('judge');view('alt');
+  $('vAlt').innerHTML=`<span class="name">최후 변론서 작성</span><div class="q">앞으로 생명을 대하는 나의 다짐 (${MINLEN}자 이상)</div><ol class="guide"><li>지금까지 생명을 대한 나의 모습 돌아보기</li><li>오늘 재판에서 깨달은 점</li><li>앞으로 일상에서 실천할 구체적인 행동 한 가지</li></ol><textarea id="cl" maxlength="400" placeholder="예) 지금까지 나는 쓸모가 있는지로 생명을 판단했다. 오늘 재판에서 모든 생명이 그 자체로 소중하다는 걸 깨달았다. 앞으로는 길에서 지렁이를 보면 흙 위로 옮겨 주겠다."></textarea><div class="row" style="justify-content:space-between"><span class="cnt" id="clc">0자 / ${MINLEN}자 이상</span></div><p class="hint" style="margin:6px 0 0">핵심 키워드가 들어가면 보너스 +1억 원!</p><div class="kw" id="kw">${KW.map(k=>`<span data-k="${k}">${k}</span>`).join('')}</div><button class="btn gold" type="button" id="clb" data-p="go" disabled>최후 변론 제출</button>`;
+  const ta=$('cl');ta.focus();
+  ta.addEventListener('input',()=>{const v=ta.value.trim(),len=v.replace(/\s/g,'').length;$('clc').textContent=`${len}자 / ${MINLEN}자 이상`;$('clb').disabled=len<MINLEN;document.querySelectorAll('#kw span').forEach(s=>s.classList.toggle('on',v.includes(s.dataset.k)))});
+  await waitPick();S.pledge=ta.value.trim();S.kws=KW.filter(k=>S.pledge.includes(k));
+  if(S.kws.length){S.bonus=10000;money(10000);fx('obj');jury('cheer',true);await feedback(2,'키워드 보너스 +1억 원!',`최후 변론에 ‘${S.kws.join('’, ‘')}’이(가) 들어 있어요. 배심원 전원이 기립 박수를 보냅니다!`,'최종 판결 듣기')}
+  else{jury('good');await feedback(1,'변론 제출 완료','진심이 담긴 다짐이에요. 공감·존중·책임 같은 핵심어를 넣으면 더 강력해져요.','최종 판결 듣기')}
+}
+async function act4(){
+  setAct('제4막 · 최종 판결','final');
+  await lines([
+   ['narr','제4막 — 최종 판결. 두 법정의 판사가 나란히 앉았습니다.'],
+   ['judge','{name} 변호사, 두 재판 모두 수고 많았습니다. 이제 마지막 관문입니다.'],
+   ['frog','개굴! 증인 여섯 명이 차례로 발언할 거예요. 각 발언이 어떤 윤리적 관점인지 판별해 주세요.'],
+   ['judge','인간 중심주의, 동물 중심주의, 생명 중심주의, 생태 중심주의. 도덕적 고려의 범위가 어디까지 넓어지는지 떠올려 보세요.'],
+   ['frog','관점을 맞히면, 그렇게 판단한 결정적 단서가 발언의 어느 부분인지도 짚어야 해요. 그럴듯한 낱말에 속지 말고요. 개굴!']]);
+  await quiz();
+  await lines([
+   ['judge','훌륭합니다. 마지막으로, 변호사님 자신의 최후 변론을 직접 써 주세요.'],
+   ['frog',`돌아보기, 깨달음, 실천. 세 가지를 담아 ${MINLEN}자 이상으로요. 진심이 담길수록 좋아요, 개굴.`]]);
+  await closing();
+  await lines([
+   ['seal','잠깐만요. 판결 전에 저도 한마디 해도 될까요?'],
+   ['seal','우리는 모두 친구예요. 우리 가운데서 인간 편이 될 종만 골라내지 마세요. 개든 나무든 가려내지 말고, 모두를 아끼고 사랑해 주세요.'],
+   ['seal','이제 여러분이 대답할 차례예요. 우리는 기다리고 있을게요.'],
+   ['judge','…들으셨죠? 그럼 최종 판결과 수임료 정산을 시작하겠습니다. 땅! 땅! 땅!']]);
+}
+/* ===== 엔딩 ===== */
+const SEAL='우리는 모두 친구예요. 우리 가운데서 인간 편이 될 종만 골라내지 마세요. 개든 나무든 가려내지 말고, 모두를 아끼고 사랑해 주세요. 이제 여러분이 대답할 차례예요. 우리는 기다리고 있을게요.';
+function grade(){const f=S.fee,h=S.hearts;
+  if(f>=240000&&h>=4)return ['전설의 지구 수호 변호사','🏆','모든 생명의 목소리를 대신한 전설! 지구 생명 공동체가 당신을 평생 변호사로 모시겠대요.'];
+  if(f>=160000&&h>=2)return ['수석 생태 변호사','🥇','날카로운 논리와 따뜻한 공감을 모두 갖췄어요. 로펌 간판에 이름이 올라갑니다!'];
+  if(f>=90000)return ['일반 변호사','⚖️','재판은 이겼지만 아직 성장할 부분이 남았어요. 다른 의뢰인으로 다시 도전해 보세요!'];
+  return ['수임료 반납 견습생','📚','이번엔 수임료를 반납해야겠어요. 내 선택을 돌아보고 한 번 더 도전하면 분명 달라질 거예요!']}
+function ending(bank){
+  clearInterval(ttimer);$('fx').innerHTML='';$('fx').className='';$('modal').classList.add('hide');$('game').classList.add('hide');const E=$('endScr');E.classList.remove('hide');window.scrollTo(0,0);
+  const d=new Date(),ds=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`;
+  const acc=S.qs?Math.round(S.ok/S.qs*100):0;
+  if(bank){
+    E.innerHTML=`<div class="title"><div class="gav" style="animation:none;font-size:90px">🔨</div><h1>파산 및 패소</h1><h2>신뢰도 하트가 모두 깨졌어요</h2><p>${esc(S.name)} 변호사의 선임비는 압류되고 사무실 간판이 내려졌어요… 하지만 진짜 변호사도 첫 재판부터 이기진 않아요. 인간의 이익만 따지거나 생명을 쓸모로 판단한 선택이 없었는지 돌아보세요.</p></div>
+    <div class="rcpt"><h3>정산 명세서</h3><table><tr><td>시작 선임비</td><td>1,000만 원</td></tr><tr><td>획득</td><td>+${fmt(S.plus)}</td></tr><tr><td>삭감</td><td>${S.minus?'-'+fmt(S.minus):'없음'}</td></tr><tr class="tot"><td>최종</td><td>${fmt(S.fee)}</td></tr></table></div>
+    <div class="seal"><span class="ic">🦭</span><div><b class="jua">바다표범</b><p style="margin:4px 0 0">${SEAL}</p></div></div>
+    <div class="row"><button class="btn gold" type="button" id="again">다시 도전하기</button></div>`;
+  }else{
+    const [g,ic,msg]=grade();
+    E.innerHTML=`<div class="title"><div class="crowd">${ic}</div><h1>최종 수임료 정산</h1><h2>${esc(S.name)} 변호사님, 수고하셨습니다!</h2></div>
+    <div class="rcpt"><h3>정산 명세서</h3><table>
+     <tr><td>시작 선임비</td><td>1,000만 원</td></tr>
+     <tr><td>변론·증거·퀴즈 획득</td><td>+${fmt(S.plus-S.bonus)}</td></tr>
+     <tr><td>최후 변론 키워드 보너스</td><td>+${fmt(S.bonus)}</td></tr>
+     <tr><td>의사봉 삭감</td><td>${S.minus?'-'+fmt(S.minus):'없음'}</td></tr>
+     <tr><td>남은 신뢰도</td><td>${'❤️'.repeat(S.hearts)}${'🖤'.repeat(5-S.hearts)}</td></tr>
+     <tr><td>첫 시도 정답률</td><td>${acc}%</td></tr>
+     <tr><td>근거·단서 적중</td><td>${S.whyOk}회</td></tr>
+     <tr class="tot"><td>최종 선임비</td><td>${fmt(S.fee)}</td></tr></table></div>
+    <div class="grade"><span class="bh">${g}</span><p>${msg}</p></div>
+    <div class="seal"><span class="ic">🦭</span><div><b class="jua">바다표범의 마지막 발언</b><p style="margin:4px 0 0">${SEAL}</p></div></div>
+    <div class="verdict" id="vd"><h3>판결문</h3><dl>
+     <dt>사건</dt><dd>지구 생명 공동체의 도덕적 고려 청구 사건</dd>
+     <dt>변호인</dt><dd>${esc(S.name)} (${g})</dd>
+     <dt>의뢰인</dt><dd>🪸 산호초 · 🪱 지렁이 · 🐝 꿀벌 · 🐯 호랑이 · 🙋 인간 대표</dd>
+     <dt>주문</dt><dd>도덕적 고려의 범위를 인간을 넘어 모든 생명과 생태계로 넓힌다.</dd>
+     <dt>최후 변론</dt><dd>“${esc(S.pledge)}”</dd>
+     <dt>선임비</dt><dd>${fmt(S.fee)}</dd></dl>
+     <p class="date">${ds} 역지사지 법원</p><div class="stamp">역지사지<br>법원<br>인</div></div>
+    <p class="hint" style="color:#d9c3ad">판결문을 화면 캡처해서 공유하거나, 아래 버튼으로 글을 복사해 활동지에 붙여 보세요.</p>
+    <div class="row"><button class="btn gold" type="button" id="cp">판결문 글 복사</button><button class="btn" type="button" id="again">다시 도전하기</button></div>`;
+    const txt=`[판결문] 억대 연봉 생태 변호사\n변호인: ${S.name} (${g})\n의뢰인: 산호초·지렁이·꿀벌·호랑이 · 인간 대표\n주문: 도덕적 고려의 범위를 인간을 넘어 모든 생명과 생태계로 넓힌다.\n최후 변론: “${S.pledge}”\n최종 선임비: ${fmt(S.fee)}\n${ds} 역지사지 법원`;
+    $('cp').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(txt);$('cp').textContent='복사했어요!'}catch(e){$('cp').textContent='복사가 막혀 있어요. 화면을 캡처해 주세요.'}});
+  }
+  $('again').addEventListener('click',()=>{E.classList.add('hide');$('titleScr').classList.remove('hide');window.scrollTo(0,0)});
+}
+async function run(){
+  S={name:($('nm').value.trim()||'신입').slice(0,12),fee:1000,hearts:5,combo:0,cards:[],plus:0,minus:0,bonus:0,qs:0,ok:0,why:0,whyOk:0,objs:0,done:[],pledge:''};
+  shown=1000;$('fee').textContent=fmt(1000);hud();window.__S=S;
+  document.querySelectorAll('.jmood').forEach(m=>m.textContent='');
+  $('titleScr').classList.add('hide');$('endScr').classList.add('hide');$('game').classList.remove('hide');window.scrollTo(0,0);
+  try{await act1();await act2();await act3();await act4();ending(false)}
+  catch(e){if(e==='BANKRUPT')ending(true);else{console.error(e)}}
+}
+$('startBtn').addEventListener('click',()=>{beep(330,.15);run()});
+}
+</script>
+</body>
+</html>
